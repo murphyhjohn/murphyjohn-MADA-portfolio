@@ -20,11 +20,11 @@ website:
             file: tidytuesday-exercise/tidytuesday-exercise.qmd
     right:
       - icon: github 
-        href: URL-TO-THIS-REPOSITORY-HERE        
+        href: https://github.com/murphyhjohn/murphyjohn-MADA-portfolio.git       
 
 format:
   html:
-    theme: cosmo
+    theme: journal
     highlight: zenburn
     css: styles.css
     toc: FALSE

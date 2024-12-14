@@ -1,15 +1,12 @@
 ---
-title: "My website and data analysis portfolio"
+title: "Welcome to my website and portfolio!"
+from: markdown+emoji
 ---
 
-# Hello
+# Hello!
 
-### And hello again
+### And hello again!
 
-Welcome to **my website** and _data analysis portfolio._ 
+This is my website and portfolio, created for Modern Applied Data Analysis (MADA) course at the University of Georgia. 
 
-
-* Please use the `Menu Bar` above to look around.
-* Have fun!
-
-**Feel free to change this text any way you want 😁!**
+Cheers:partying_face:
