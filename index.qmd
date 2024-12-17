@@ -5,8 +5,6 @@ from: markdown+emoji
 
 # Hello!
 
-### And hello again!
-
 This is my website and portfolio, created for Modern Applied Data Analysis (MADA) course at the University of Georgia. 
 
 Cheers:partying_face:
