@@ -170,3 +170,15 @@ knitr::include_graphics(here("starter-analysis-exercise","results","figures","We
 #| echo: FALSE
 knitr::include_graphics(here("starter-analysis-exercise","results","figures","Favorite-legume-height-stratified.png"))
 ```
+
+# New Table
+
+@tbl-resulttable3 shows a summary of a linear model fit considering VO2 Max and Favorite Legume as predictors of Height.
+
+```{r}
+#| label: tbl-resulttable3
+#| tbl-cap: "Linear model fit table: VO2 Max and Favorite Legume as predictors of Height."
+#| echo: FALSE
+resulttable3 = readRDS(here("starter-analysis-exercise","results","tables-files","resulttable3.rds"))
+knitr::kable(resulttable3)
+```
