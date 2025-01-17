@@ -12,6 +12,8 @@ bibliography: ../dataanalysis-template-references.bib
 csl: ../apa.csl
 ---
 
+Shaun van den Hurk contributed to this exercise. 
+
 The structure below is one possible setup for a data analysis project (including the course project). For a manuscript, adjust as needed. 
 You don't need to have exactly these sections, but the content covering those sections should be addressed.
 
@@ -149,5 +151,22 @@ Note that this cited reference will show up at the end of the document, the refe
 
 # References
 
+# New Figures
 
+@fig-weight-vo2max shows a scatterplot figure of Weight by VO2 Max.
 
+```{r}
+#| label: fig-weight-vo2max
+#| fig-cap: "Weight by VO2 Max"
+#| echo: FALSE
+knitr::include_graphics(here("starter-analysis-exercise","results","figures","Weight-VO2-Max-stratified.png"))
+```
+
+@fig-legume-height shows a scatterplot figure of Favorite Legume by Height.
+
+```{r}
+#| label: fig-legume-height
+#| fig-cap: "Favorite Legume by Weight"
+#| echo: FALSE
+knitr::include_graphics(here("starter-analysis-exercise","results","figures","Favorite-legume-height-stratified.png"))
+```

@@ -109,7 +109,7 @@ Part 2 contributions:
 Create a boxplot with favorite legumes as a function of height.
 
 ```{r}
-p5<- mydata %>% ggplot(aes(x= `Favorite Legume`, y =Height)) + geom_boxplot() 
+p5<- mydata %>% ggplot(aes(x=legume, y =Height)) + geom_boxplot() 
 plot(p5)
 figure_file = here("starter-analysis-exercise","results","figures","Favorite-legume-height-stratified.png")
 ggsave(filename = figure_file, plot=p5)
@@ -118,7 +118,7 @@ ggsave(filename = figure_file, plot=p5)
 
 Create a scatter plot with weight as a function of VO2 Max.
 ```{r}
-p6<- mydata %>% ggplot(aes(x=Weight, y = `VO2 Max`)) + geom_point() 
+p6<- mydata %>% ggplot(aes(x=Weight, y =vo2_max)) + geom_point() 
 plot(p6)
 figure_file = here("starter-analysis-exercise","results","figures","Weight-VO2-Max-stratified.png")
 ggsave(filename = figure_file, plot=p6)
