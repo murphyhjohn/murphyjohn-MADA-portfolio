@@ -108,9 +108,13 @@ skimr::skim(d4)
 ```
 
 ```{r}
-#Changing Favorite legumes column to a factor
-d4$`Favorite Legume` <- as.factor(d4$`Favorite Legume`)  
-skimr::skim(d4)
+# Rename variables 
+d5 <- d4 %>% dplyr::rename(legume = `Favorite Legume`,
+                           vo2_max = `VO2 Max`)
+
+#change Favorite Legume column to a factor
+d5$legume <- as.factor(d5$legume)  
+skimr::skim(d5)
 ```
 
 All done, data is clean now. 
