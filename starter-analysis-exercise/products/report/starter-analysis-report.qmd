@@ -166,7 +166,7 @@ knitr::include_graphics(here("starter-analysis-exercise","results","figures","We
 
 ```{r}
 #| label: fig-legume-height
-#| fig-cap: "Favorite Legume by Weight"
+#| fig-cap: "Favorite Legume by Height"
 #| echo: FALSE
 knitr::include_graphics(here("starter-analysis-exercise","results","figures","Favorite-legume-height-stratified.png"))
 ```
