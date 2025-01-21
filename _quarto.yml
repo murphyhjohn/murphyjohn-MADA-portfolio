@@ -24,7 +24,7 @@ website:
 
 format:
   html:
-    theme: journal
+    theme: default
     highlight: zenburn
     css: styles.css
     toc: FALSE

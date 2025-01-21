@@ -2,4 +2,130 @@
 title: "R Coding Exercise"
 ---
 
-Placeholder file for the future R coding exercise.
+# Setup
+
+```{r}
+# load packages
+library(dslabs) # contains data for analysis
+```
+
+```{r}
+# look at help file for gapminder data
+help(gapminder)
+
+# view data structure
+str(gapminder)
+
+# view data summary
+summary(gapminder)
+
+# find data object type
+class(gapminder)
+```
+
+`gapminder` is a dataframe object.
+
+# Data processing
+
+```{r}
+# data containing only african countries
+africadata <- gapminder |>
+  dplyr::filter(continent == "Africa")
+
+# view data structure
+str(africadata)
+
+# view data summary
+summary(africadata)
+```
+
+```{r}
+# object containing only infant_mortality and life_expectancy
+obj1 <- africadata |>
+  dplyr::select(infant_mortality, life_expectancy)
+
+# view obj1 structure
+str(obj1)
+
+# view obj1 summary
+summary(obj1)
+
+
+# object containing only population and life_expectancy
+obj2 <- africadata |>
+  dplyr::select(population, life_expectancy)
+
+# view obj2 structure
+str(obj2)
+
+# view obj2 summary
+summary(obj2)
+```
+
+# Plotting
+
+```{r}
+# plot life expectancy as a function of infant mortality
+plot(obj1$infant_mortality, obj1$life_expectancy)
+
+# plot life expectancy as a function of population
+plot(obj2$population, obj2$life_expectancy, log = 'x')
+```
+
+The `africadata` object contains country-level data for different years from 1960 to 2016. The streaks seen in the second plot represent the same country changing over time.
+
+# More data processing
+
+```{r}
+# filter data for years with missing infant mortality data
+infant_na <- africadata |>
+  dplyr::filter(is.na(infant_mortality))
+
+# print years with missing infant mortality data
+unique(infant_na$year)
+```
+
+```{r}
+# create object with data from 2000 only
+africadata_2000 <- africadata |>
+  dplyr::filter(year == "2000")
+
+# view data structure
+str(africadata_2000)
+
+# view data summary
+summary(africadata_2000)
+```
+
+# More plotting
+
+```{r}
+# plot life expectancy as a function of infant mortality
+plot(africadata_2000$infant_mortality, africadata_2000$life_expectancy)
+
+# plot life expectancy as a function of population
+plot(africadata_2000$population, africadata_2000$life_expectancy, log = 'x')
+```
+
+# Model fits
+
+```{r}
+# linear regression of infant mortality as predictor of life expectancy
+fit1 <- lm(life_expectancy ~ infant_mortality, data = africadata_2000)
+
+# print summary of fit1
+summary(fit1)
+
+
+# linear regression of population as predictor of life expectancy
+fit2 <- lm(life_expectancy ~ population, data = africadata_2000)
+
+# print summary of fit2
+summary(fit2)
+```
+
+The coefficient estimate of `infant_mortality` as a predictor of `life_expectancy` is $-0.189$ with a p-value of $<0.001$. There is evidence to suggest a statistically significant negative association between infant mortality and life expectancy.
+
+The coefficient estimate of `population` as a predictor of `life_expectancy` is $2.756*10^{-8}$ with a p-value of $0.616$. There is insufficient evidence to suggest an association between population size and life expectancy.
+
+
