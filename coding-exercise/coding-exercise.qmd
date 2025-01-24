@@ -129,3 +129,176 @@ The coefficient estimate of `infant_mortality` as a predictor of `life_expectanc
 The coefficient estimate of `population` as a predictor of `life_expectancy` is $2.756*10^{-8}$ with a p-value of $0.616$. There is insufficient evidence to suggest an association between population size and life expectancy.
 
 
+```{r}
+########################################################## 
+```
+
+
+This section contributed by Murtaza Yaqubi.
+
+Install and library packages.
+
+```{r}
+library(dslabs)
+library(tidyverse)
+library(dplyr)
+```
+
+#loading and setting up the data.
+
+```{r}
+#view the help page of the data set to better understand the dataset.
+help("murders")
+
+#check the data.
+head(murders)
+
+#view the structure of the data.
+str(murders)
+
+#view the summary of the data.
+summary(murders)
+
+#view class of the data.
+class(murders)
+
+#create an object ans assign murders to it.
+Dataset_mur <- murders
+```
+
+#Processing data.
+
+```{r}
+#Isolated the variables of interest using select function and then rearranged the order of total to descending.   
+df1 <- Dataset_mur %>%
+  select("state", "region", "population", "total") %>%
+  arrange(desc(total))
+
+#view the newly created dataset.
+print(df1)
+```
+
+View the top ten states with the highest murder rate in 2010.
+
+```{r}
+top_ten <- df1 %>%
+  slice_max(total, n=10) %>% #the ten highest observations in the total column.
+  select(!"region") #We do not need to look at the regions at this moment. 
+
+print(top_ten) #view the dataset.
+```
+
+California ranked number one on the top ten list of states with the highest murder rates in 2010.
+
+View the bottom ten states in regard to murder rate in 2010.
+
+```{r}
+bottom_ten <- df1 %>%
+  select(!"region") %>%
+  slice_min(total, n=10) %>% #slice_min helps slice the bottom 10 observations of the "total" variable.
+  arrange(desc(total))
+
+#view the dataset.
+print(bottom_ten)
+```
+
+Vermont was the state with the lowest murder rates in 2010.
+
+Let's investigate further by comparing murder rates by the region.
+
+```{r}
+#create a dataset for region and total columns.
+region <- df1 %>%
+  select(region, total)
+  
+#view the dataset.
+print(region)
+
+#calculate murder rates in the Western region of the U.S.
+west <- region %>%
+  filter(region == "West") 
+
+#Sum of murders in the Western region of the U.S.
+sum(west$total)
+
+#calculate murder rates in the Northestern region of the U.S.
+nor_east <- region %>%
+  filter(region == "Northeast") 
+
+#Sum of murders in this region of the U.S.
+sum(nor_east$total)
+
+#calculate murder rates in the North Central region of the U.S.
+nor_cen <- region %>%
+  filter(region == "North Central") 
+
+#Sum of murders in this region of the U.S.
+sum(nor_cen$total)
+
+#calculate murder rates in the Southern region of the U.S.
+south <- region %>%
+  filter(region == "South") 
+
+#Sum of murders in this region of the U.S.
+sum(south$total)
+
+```
+
+#Plotting:
+
+```{r}
+#Generate a barplot with state as a function of murder rates.
+pt1 <- df1 %>%
+  ggplot(aes(x = state, y = total)) +
+  geom_col(fill = "red", color = "black") + labs(title = "Murder Rates per State", x = "State", y = "Total") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Generae the plot. 
+plot(pt1)
+```
+California, Texas and Florida had the higest murder rates in the U.S.
+
+
+Let's plot regions as a function of murder rates.
+```{r}
+#Generate a barplot with regions as a function of murder rates.
+pt2 <- df1 %>%
+  ggplot(aes(x = region, y = total)) +
+  geom_col(fill = "red", color = "black") + labs(title = "Murder Rates by region", x = "Regions", y = "Total") + theme_minimal() 
+
+#Generate the plot
+plot(pt2)
+
+```
+Southern region of the U.S withnessed the greatest number of murders in 2010. 
+
+
+Let's plot population as a function of murder rates in a scatterplot.
+
+```{r}
+#scatterplot with a liner regression line.
+pt3 <- df1 %>%
+  ggplot(aes(x = population, y = total)) +
+  geom_point(color = "black", fill = "green", shape = 21, size = 3) + 
+  geom_smooth(method = "lm", color = "blue", se = TRUE) + # Linear trend line
+  scale_x_log10() +  # Scale the x-axis to log10
+  labs(title = "Scatter Plot: Log of Population vs. Total", x = "Log(Population)", y = "Total") + #use labs function to add titles and labels. 
+  theme_minimal()
+
+#generate the plot.
+plot(pt3)
+
+```
+There is a strong positive correlation between population and murder rates. 
+
+
+# Model fit.
+
+```{r}
+#Fit model with murder rates as an outcome and population as a predictor. 
+model <- lm(total ~ population, data = df1)
+
+#view summary of the model.
+summary(model)
+```
+The result of the fit model suggests that there is a positive association between population and murder rate. The coeeficiant estimate for population is a positive number and the p-value <0.01 which suggest that the result is statistically significant. The interpretaion of the result is that with increasing population, murder rates increase. 
+
