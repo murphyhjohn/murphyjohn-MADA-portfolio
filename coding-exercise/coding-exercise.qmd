@@ -1,8 +1,9 @@
 ---
 title: "R Coding Exercise"
 ---
+# Part 1
 
-# Setup
+## Setup
 
 ```{r}
 # load packages
@@ -25,7 +26,7 @@ class(gapminder)
 
 `gapminder` is a dataframe object.
 
-# Data processing
+## Data processing
 
 ```{r}
 # data containing only african countries
@@ -62,7 +63,7 @@ str(obj2)
 summary(obj2)
 ```
 
-# Plotting
+## Plotting
 
 ```{r}
 # plot life expectancy as a function of infant mortality
@@ -74,7 +75,7 @@ plot(obj2$population, obj2$life_expectancy, log = 'x')
 
 The `africadata` object contains country-level data for different years from 1960 to 2016. The streaks seen in the second plot represent the same country changing over time.
 
-# More data processing
+## More data processing
 
 ```{r}
 # filter data for years with missing infant mortality data
@@ -97,7 +98,7 @@ str(africadata_2000)
 summary(africadata_2000)
 ```
 
-# More plotting
+## More plotting
 
 ```{r}
 # plot life expectancy as a function of infant mortality
@@ -107,7 +108,7 @@ plot(africadata_2000$infant_mortality, africadata_2000$life_expectancy)
 plot(africadata_2000$population, africadata_2000$life_expectancy, log = 'x')
 ```
 
-# Model fits
+## Model fits
 
 ```{r}
 # linear regression of infant mortality as predictor of life expectancy
@@ -128,11 +129,7 @@ The coefficient estimate of `infant_mortality` as a predictor of `life_expectanc
 
 The coefficient estimate of `population` as a predictor of `life_expectancy` is $2.756*10^{-8}$ with a p-value of $0.616$. There is insufficient evidence to suggest an association between population size and life expectancy.
 
-
-```{r}
-########################################################## 
-```
-
+# Part 2
 
 This section contributed by Murtaza Yaqubi.
 
