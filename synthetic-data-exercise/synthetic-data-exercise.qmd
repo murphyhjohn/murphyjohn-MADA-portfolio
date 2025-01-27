@@ -1,0 +1,13 @@
+---
+title: "Synthetic Data Generation and Exploration"
+author: "Murphy John"
+editor: visual
+---
+
+For this exercise, I am going to simulate data from a (hypothetical) vaccine cohort of individuals who received various doses of a vaccine. Samples are collected on days 0, 7, 21, 28, 35, 56, 180, and 365 and analyzed using enzyme-linked immunosorbent assays (ELISA). The following variables are to be included: `id`, `dose`, `days`, `antibody`, `titer.` Brief descriptions of the variables are as follows:
+
+-   `id` is an identifier for each participant
+-   `dose` is the numerical dose of vaccine for which the individual received in micrograms (mcg)
+-   `days` represents the number of days since vaccination for which the sample was collected (0, 7, 21, 28, 35, 56, 180, 365)
+-   `antibody` is the corresponding antibody being detected by ELISA (IgG, IgA)
+-   `titer` is the measurement of the amount of antibody in the sample
