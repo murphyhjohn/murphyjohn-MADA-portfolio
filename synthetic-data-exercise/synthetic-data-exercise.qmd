@@ -6,84 +6,172 @@ editor: visual
 
 # Introduction
 
-For this exercise, I am going to simulate data from a (hypothetical) vaccine cohort of individuals who received various doses of a vaccine. Samples are collected on days 0, 7, 21, 28, 35, 56, 180, and 365 and analyzed using enzyme-linked immunosorbent assays (ELISA). The following variables are to be included: `id`, `dose`, `days`, `antibody`, `titer.` Brief descriptions of the variables are as follows:
+For this exercise, I am going to simulate simple data from a (hypothetical) vaccine cohort of individuals who received various doses of a vaccine. Samples were collected and a specific antibody was measured on days 0, 3, 5, 7, 14, 21, 28, and 35. The following variables are to be included: `id`, `age`, `dose`, `days`, `titer.` Brief descriptions of the variables are as follows:
 
 -   `id` is an identifier for each participant
--   `dose` is the numerical dose of vaccine for which the individual received in micrograms (mcg) (5, 50, 150)
--   `days` represents the number of days since vaccination for which the sample was collected (0, 7, 21, 28, 35, 56, 180, 365)
--   `antibody` is the corresponding antibody being detected by ELISA (IgG, IgA)
+-   `age` is the participant's age at day 0
+-   `dose` is the numerical dose of vaccine for which the individual received in micrograms (mcg) (10, 100, 1000)
+-   `days` represents the number of days since vaccination on which the sample was collected
 -   `titer` is the measured amount of antibody in the sample
+
+The simulation assumes the following:
+
+-   The immune response follows a logistic growth function up to a peak, followed by an exponential decay.
+-   Older individuals have a weaker boost in response to vaccination.
+-   Baseline titers (day 0) are independent of dose and vary between individuals.
+-   Individual variation is present in peak titer, growth rate, decay rate, and peak timing.
+-   Titers are strictly positive.
 
 # Setup
 
-## General 
+## General
 
 ```{r}
 # load packages
-
+library(dplyr)
+library(ggplot2)
 ```
 
+## Assign parameters
+
 ```{r}
-# general settings
-set.seed(123) # for reproducibility
+# Set seed for reproducibility
+set.seed(123)
 
-# days at which outcome is measured
-timevec <- c(0, 7, 21, 28, 35, 56, 180, 365)
+# number of individuals
+N <- 100
 
-# the are a different number of individuals by dose
-Nlow <- 8
-Nmed <- 10
-Nhigh <- 9
+# assign random ages
+ages <- sample(18:80, N, replace = TRUE)
 
-# total number of individuals
-Nind <- Nlow + Nmed + Nhigh
+# vaccine doses
+dose <- c(10, 100, 1000)
 
-# set up location to save data
-filename <- "simdat.rds"
+# measurement times
+days <- c(0, 3, 5, 7, 14, 21, 28, 35) 
 
-# we only consider dose on the log scale
-low_dose <- log(5)
-med_dose <- log(50)
-high_dose <- log(150)
+# assign doses
+doses <- rep(dose, length.out = N)
 
-# create numerical dose variable
-dosevec <- c(rep(low_dose, Nlow), rep(med_dose, Nmed), rep(high_dose, Nhigh))
-
-# create an ordered categorical dose variable
-dose_cat <- ordered(c(
-  rep("low", Nlow),
-  rep("medium", Nmed),
-  rep("high", Nhigh),
-  levels = c("low", "medium", "high")
-)
+# categorical dose variable
+dose_cat <- if_else(
+  doses == 10, "low", 
+  if_else(
+    doses == 100, "medium", "high"
+  )
 )
 ```
 
-## Parameter values
-
-Suppose we have an idea of the distribution of the data. We want to generate data with these distributions in mind. 
+# Simulate data
 
 ```{r}
-sigma <- 5
+# generate baseline titers
+baseline_titers <- runif(N, min = 0, max = 50)
 
-gamma_p <- abs(rt(Nind, df = 3) * 5 + 0)  
-gamma_g <- abs(rt(Nind, df = 3) * 5 + 0)
-gamma_T <- abs(rt(Nind, df = 3) * 5 + 0)
-gamma_d <- abs(rt(Nind, df = 3) * 5 + 0)
+# function to simulate titer with logistic growth and exponential decay
+simulate_titer <- function(age, dose, days, baseline) {
+  boost_factor <- exp(-0.05 * (age - 18))
+  peak_titer <- dose * boost_factor * 1000 * rnorm(1, mean = 1, sd = 0.2) 
+  growth_rate <- 0.3 * rnorm(1, mean = 1, sd = 0.01)
+  decay_rate <- 0.2 * rnorm(1, mean = 1, sd = 0.01)  
+  peak_day <- 7 + rnorm(1, mean = 0, sd = 3) 
+  
+  # logistic growth until peak day, then exponential decay
+  titer <- ifelse(days == 0, baseline,
+                  ifelse(days <= peak_day,
+                         baseline + (peak_titer - baseline) / (1 + exp(-growth_rate * (days - peak_day / 2))),
+                         pmax(peak_titer * exp(-decay_rate * (days - peak_day)), 0)))
+  
+  return(titer)
+}
 
-p0 = rnorm(Nind, mean = 0, sd = gamma_p)
-g0 = rnorm(Nind, mean = 0, sd = gamma_g)
-T0 = rnorm(Nind, mean = 0, sd = gamma_T)
-d0 = rnorm(Nind, mean = 0, sd = gamma_d)
-
-p1 = rnorm(n=Nind, 10, 10) # peak level
-g1 = rnorm(n=Nind, 0, 1) # growth speed
-T1 <- rnorm(n=Nind, 3, 5) # timing at half the peak
-d1 <- rnorm(n=Nind, 0, 10) # decay rate
-
-# parameter equations
-pi <- p0 + 
+# Generate dataset
+vaccine_data <- expand.grid(ID = 1:N, days = days) %>%
+  mutate(
+    age = ages[ID],  
+    dose = doses[ID],  
+    dose_cat = dose_cat[ID],
+    baseline_titer = baseline_titers[ID],
+    titer = mapply(simulate_titer, age, dose, days, baseline_titer),
+    log_titer = log(titer)
+  )
 ```
+
+# Data exploration
+
+```{r}
+# view summary
+summary(vaccine_data)
+
+# plot days by titer stratified by dose
+ggplot(vaccine_data) +
+  geom_line(aes(x = days, y = log_titer, color = dose_cat, group = ID)) +
+  geom_point(aes(x = days, y = log_titer, color = dose_cat)) +
+  labs(title = "log(Titer) over time by Dose", 
+       x = "Day", y = "log(Titer)", color = "Dose") +
+  theme_minimal()
+
+# calculate the mean titer for each dose and day combination
+mean_titer_data <- vaccine_data %>%
+  group_by(dose, days) %>%
+  summarise(mean_log_titer = mean(log_titer), .groups = "drop")
+
+# plot the individual points and mean curves by dose
+ggplot(vaccine_data) +
+  geom_point(aes(x = days, y = log_titer, color = factor(dose)), alpha = 0.5) +
+  geom_line(data = mean_titer_data, aes(x = days, y = mean_log_titer, color = factor(dose)), size = 1.2) + 
+  labs(title = "Mean log(Titer) Over time by Dose", 
+       x = "Day", y = "log(Titer)", color = "Dose") +
+  theme_minimal()
+```
+
+Wile some overlap is apparent, dose seems to be a distinguishing factor of titer. This is good considering that a positive association between dose and titer was assummed. We also assumed that age was negatively associated with titer. Let's explore this in the data.
+
+```{r}
+# create age categories
+vaccine_data2 <- vaccine_data %>%
+  mutate(age_group = case_when(
+    age < 30 ~ "18-29",
+    age < 50 ~ "30-49",
+    age < 70 ~ "50-69",
+    TRUE ~ "70+"
+  ))
+
+mean_titer_age <- vaccine_data2 %>%
+  group_by(dose, days, age_group) %>%
+  summarise(mean_log_titer = mean(log_titer), .groups = "drop")
+
+# plot low dose by age group
+ggplot(subset(vaccine_data2, dose == 10)) +  # Filter data for low dose
+  geom_point(aes(x = days, y = log_titer, color = age_group), alpha = 0.5) +
+  geom_line(data = subset(mean_titer_age, dose == 10), 
+            aes(x = days, y = mean_log_titer, color = age_group, group = age_group), size = 1.2) +
+  labs(title = "Mean log(Titer) Over Time for Low Dose by Age Group", 
+       x = "Day", y = "log(Titer)", color = "Age Group") +
+  theme_minimal()
+
+# plot medium dose by age group
+ggplot(subset(vaccine_data2, dose == 100)) +  # Filter data for low dose
+  geom_point(aes(x = days, y = log_titer, color = age_group), alpha = 0.5) +
+  geom_line(data = subset(mean_titer_age, dose == 100), 
+            aes(x = days, y = mean_log_titer, color = age_group, group = age_group), size = 1.2) +
+  labs(title = "Mean log(Titer) Over Time for Medium Dose by Age Group", 
+       x = "Day", y = "log(Titer)", color = "Age Group") +
+  theme_minimal()
+
+# plot high dose by age group
+ggplot(subset(vaccine_data2, dose == 1000)) +  # Filter data for low dose
+  geom_point(aes(x = days, y = log_titer, color = age_group), alpha = 0.5) +
+  geom_line(data = subset(mean_titer_age, dose == 1000), 
+            aes(x = days, y = mean_log_titer, color = age_group, group = age_group), size = 1.2) +
+  labs(title = "Mean log(Titer) Over Time for High Dose by Age Group", 
+       x = "Day", y = "log(Titer)", color = "Age Group") +
+  theme_minimal()
+```
+
+The age differences that we specified when simulating the data are certainly present in our final dataset.
+
+This simulation was inspired by real data but certainly simplified for the purpose of this exercise. In the future, one could consider additional covariates, such as repeat vaccination status, prior infections, and additional comorbidities, all of which are known to be associated with immune response to vaccination.
 
 
 
