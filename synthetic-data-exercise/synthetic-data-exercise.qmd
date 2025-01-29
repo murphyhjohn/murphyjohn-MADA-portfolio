@@ -4,10 +4,86 @@ author: "Murphy John"
 editor: visual
 ---
 
+# Introduction
+
 For this exercise, I am going to simulate data from a (hypothetical) vaccine cohort of individuals who received various doses of a vaccine. Samples are collected on days 0, 7, 21, 28, 35, 56, 180, and 365 and analyzed using enzyme-linked immunosorbent assays (ELISA). The following variables are to be included: `id`, `dose`, `days`, `antibody`, `titer.` Brief descriptions of the variables are as follows:
 
 -   `id` is an identifier for each participant
--   `dose` is the numerical dose of vaccine for which the individual received in micrograms (mcg)
+-   `dose` is the numerical dose of vaccine for which the individual received in micrograms (mcg) (5, 50, 150)
 -   `days` represents the number of days since vaccination for which the sample was collected (0, 7, 21, 28, 35, 56, 180, 365)
 -   `antibody` is the corresponding antibody being detected by ELISA (IgG, IgA)
--   `titer` is the measurement of the amount of antibody in the sample
+-   `titer` is the measured amount of antibody in the sample
+
+# Setup
+
+## General 
+
+```{r}
+# load packages
+
+```
+
+```{r}
+# general settings
+set.seed(123) # for reproducibility
+
+# days at which outcome is measured
+timevec <- c(0, 7, 21, 28, 35, 56, 180, 365)
+
+# the are a different number of individuals by dose
+Nlow <- 8
+Nmed <- 10
+Nhigh <- 9
+
+# total number of individuals
+Nind <- Nlow + Nmed + Nhigh
+
+# set up location to save data
+filename <- "simdat.rds"
+
+# we only consider dose on the log scale
+low_dose <- log(5)
+med_dose <- log(50)
+high_dose <- log(150)
+
+# create numerical dose variable
+dosevec <- c(rep(low_dose, Nlow), rep(med_dose, Nmed), rep(high_dose, Nhigh))
+
+# create an ordered categorical dose variable
+dose_cat <- ordered(c(
+  rep("low", Nlow),
+  rep("medium", Nmed),
+  rep("high", Nhigh),
+  levels = c("low", "medium", "high")
+)
+)
+```
+
+## Parameter values
+
+Suppose we have an idea of the distribution of the data. We want to generate data with these distributions in mind. 
+
+```{r}
+sigma <- 5
+
+gamma_p <- abs(rt(Nind, df = 3) * 5 + 0)  
+gamma_g <- abs(rt(Nind, df = 3) * 5 + 0)
+gamma_T <- abs(rt(Nind, df = 3) * 5 + 0)
+gamma_d <- abs(rt(Nind, df = 3) * 5 + 0)
+
+p0 = rnorm(Nind, mean = 0, sd = gamma_p)
+g0 = rnorm(Nind, mean = 0, sd = gamma_g)
+T0 = rnorm(Nind, mean = 0, sd = gamma_T)
+d0 = rnorm(Nind, mean = 0, sd = gamma_d)
+
+p1 = rnorm(n=Nind, 10, 10) # peak level
+g1 = rnorm(n=Nind, 0, 1) # growth speed
+T1 <- rnorm(n=Nind, 3, 5) # timing at half the peak
+d1 <- rnorm(n=Nind, 0, 10) # decay rate
+
+# parameter equations
+pi <- p0 + 
+```
+
+
+
