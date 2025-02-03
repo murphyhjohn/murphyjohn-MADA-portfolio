@@ -1,0 +1,181 @@
+---
+title: "cdcdata-exercise"
+format: html
+---
+
+Data Description: Data set was downloaded from the CDC's website on 2025-02-03. 
+This dataset is titled Nutrition, Physical Activity, and Obesity - American 
+Community Survey. It contains state specific data on percent of adults who 
+usually biked or walked to work in the last week from 2010 to 2022, excluding 
+2020. There are a total of 636 rows and 27 columns. 
+See [here](https://data.cdc.gov/Nutrition-Physical-Activity-and-Obesity/Nutrition-Physical-Activity-and-Obesity-American-C/8mrp-rmkw/about_data)
+for more details.
+
+# Setup
+
+```{r}
+# load packages
+library(dplyr)
+library(ggplot2)
+library(maps)
+```
+
+
+```{r}
+# loads data
+dat <- read.csv(here::here("cdcdata-exercise/data/raw/rawdata.csv"))
+```
+
+# Data processing
+
+```{r}
+# view data summary
+summary(dat)
+
+# select a subset of variables
+dat1 <- dat %>%
+  select(
+    YearStart,
+    YearEnd,
+    LocationAbbr,
+    LocationDesc,
+    GeoLocation,
+    percent_walk_bike = Data_Value,
+    Low_Confidence_Limit,
+    High_Confidence_Limit
+  )
+```
+
+# Exploratory data analysis
+
+```{r}
+# number of rows
+nrow(dat1)
+
+# number of columns
+ncol(dat1)
+
+# data structure
+str(dat1)
+
+# print forst few obs
+head(dat1)
+
+# print last few obs
+tail(dat1)
+
+# check the states in the analysis
+unique(dat1$LocationDesc)
+# note that District of Columbia, Puerto Rico, and a National percentage are 
+# included as a location
+
+# check location by year
+table(dat1$LocationDesc, dat1$YearStart)
+# notice that 2020 data is not available. otherwise, each location provides data
+# in each year
+```
+
+```{r}
+# summarize percent_walk_bike
+summary(dat1$percent_walk_bike)
+
+# Histogram
+ggplot(dat1, aes(x = percent_walk_bike)) +
+  geom_histogram(binwidth = 1, color = "black", alpha = 0.5) +
+  labs(title = "Distribution of Percent Walking/Biking to Work",
+       x = "Percent",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+# More data processing
+
+```{r}
+# make seperate datasets for state-level and national-level
+dat_state <- dat1 %>%
+  filter(LocationDesc != "National") %>%
+  # Create longitude variable from GeoLocation
+  mutate(longitude = as.numeric(sapply(
+    strsplit(gsub("[()]", "", as.character(GeoLocation)), ", "), function(x) x[2]
+  )))
+
+dat_national <- dat1 %>%
+  filter(LocationDesc == "National")
+```
+
+# More EDA
+
+```{r}
+# summarize location data
+dat_state %>%
+  count(LocationAbbr) %>%
+  arrange(desc(n))
+
+# create categorical variable "region"
+map("state")
+abline(v = -100, lwd = 3)
+text(-120, 30, "West")
+text(-75, 30, "East")
+
+dat_state$region <- factor(ifelse(dat_state$longitude < -100, "west", "east"))
+
+# summarize regions
+summary(dat_state$region)
+
+# 444 / 12 = 37 locations in the east
+# 180 / 12 = 15 locations in the west
+```
+
+```{r}
+# summarize by region
+tapply(dat_state$percent_walk_bike, dat_state$region, summary)
+
+# west has a larger average than east but a much larger maximum value
+
+# plot percent_walk_bike by region
+ggplot(dat_state, aes(x = percent_walk_bike)) +
+  geom_histogram(binwidth = 1, color = "black", fill = "skyblue", alpha = 0.7) +
+  facet_wrap(~ region) +
+  theme_minimal()
+
+# count Data_Value by region
+
+dat_state %>%
+  mutate(Data_Value_Range = cut(Data_Value, breaks = seq(0, 20, by = 1), include.lowest = TRUE, right = FALSE)) %>%
+  group_by(region, Data_Value_Range) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  arrange(region, Data_Value_Range)
+```
+
+```{r}
+# we know that in 2020 there was the covid-19 pandemic. let's see if that event
+# may have changed individual's habits. plot the 2019 data and the 2021 data
+
+# 2019
+dat2019 <- dat1 %>%
+  filter(
+    YearStart == 2019
+  )
+
+ggplot(dat2019, aes(x = LocationAbbr, y = percent_walk_bike)) +
+  geom_boxplot() +
+  geom_errorbar(aes(ymin = Low_Confidence_Limit, ymax = High_Confidence_Limit),
+                width = 0.2, color = "red") +
+  scale_y_continuous(limits = c(0, 20))
+
+# 2021
+dat2021 <- dat1 %>%
+  filter(
+    YearStart == 2021
+  )
+
+ggplot(dat2021, aes(x = LocationAbbr, y = percent_walk_bike)) +
+  geom_boxplot() +
+  geom_errorbar(aes(ymin = Low_Confidence_Limit, ymax = High_Confidence_Limit),
+                width = 0.2, color = "red") +
+  scale_y_continuous(limits = c(0, 20))
+# it appears that there may be an overall decrease in walking or biking to work
+# but this would need to be explored further before drawing any conclusions
+```
+
+
