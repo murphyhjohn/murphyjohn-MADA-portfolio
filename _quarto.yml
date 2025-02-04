@@ -16,6 +16,8 @@ website:
             file: coding-exercise/coding-exercise.qmd
           - text: "Synthetic Data Exercise"
             file: synthetic-data-exercise/synthetic-data-exercise.qmd
+          - text: "Data Analysis Exercise"
+            file: cdcdata-exercise/code/cdcdata-exercise.qmd
           - text: "Presentation Exercise"
             file: presentation-exercise/presentation-exercise.qmd
           - text: "Tidy Tuesday Exercise"

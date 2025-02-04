@@ -1,14 +1,19 @@
 ---
-title: "cdcdata-exercise"
+title: "Data Analysis Exercise"
+subtitle: "cdcdata-exercise"
+author: "Murphy John"
 format: html
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
-Data Description: Data set was downloaded from the CDC's website on 2025-02-03. 
-This dataset is titled Nutrition, Physical Activity, and Obesity - American 
-Community Survey. It contains state specific data on percent of adults who 
-usually biked or walked to work in the last week from 2010 to 2022, excluding 
-2020. There are a total of 636 rows and 27 columns. 
-See [here](https://data.cdc.gov/Nutrition-Physical-Activity-and-Obesity/Nutrition-Physical-Activity-and-Obesity-American-C/8mrp-rmkw/about_data)
+Data Description: Data was downloaded from the CDC on 2025-02-03. This
+dataset is titled NHANES Select Chronic Conditions Prevalence Estimates.
+It contains national data on obesity, high total cholesterol, and
+hypertension rates from 1999 to 2018 by sex, race, and age.There are a
+total of 950 rows and 12 columns. See
+[here](https://data.cdc.gov/NCHS/NHANES-Select-Chronic-Conditions-Prevalence-Estima/i667-sjhg/about_data)
 for more details.
 
 # Setup
@@ -17,9 +22,7 @@ for more details.
 # load packages
 library(dplyr)
 library(ggplot2)
-library(maps)
 ```
-
 
 ```{r}
 # loads data
@@ -35,14 +38,43 @@ summary(dat)
 # select a subset of variables
 dat1 <- dat %>%
   select(
-    YearStart,
-    YearEnd,
-    LocationAbbr,
-    LocationDesc,
-    GeoLocation,
-    percent_walk_bike = Data_Value,
-    Low_Confidence_Limit,
-    High_Confidence_Limit
+    years = Survey.Years,
+    sex = Sex,
+    age = Age.Group,
+    measure = Measure,
+    percent = Percent
+  ) 
+```
+
+```{r}
+# filter for more granular data - seperate by sex, age categories
+dat2 <- dat1 %>%
+  filter(
+    sex != "All",
+    age != "20 and over",
+    age != "2-19"
+  ) %>%
+  mutate(
+    age_factor = factor(age, levels = c(
+      "2-5","6-11","12-19","20-29","30-39","40-49",
+      "50-59","60-69","70 and over")
+    ),
+    age = as.numeric(age_factor),
+    sex = factor(sex, levels = c("Female", "Male")),
+    years_factor = factor(years, levels = c(
+      "1999-2000","2001-2002","2003-2004",
+      "2005-2006","2007-2008","2009-2010",
+      "2011-2012","2013-2014","2015-2016","2017-2018"
+    )),
+    years = as.numeric(years_factor)
+  )
+
+# turn obesity, cholesterol, and hypertension into their own variables
+dat3 <- dat2 %>%
+  group_by(years, sex, age) %>%
+  tidyr::pivot_wider(
+    names_from = measure,
+    values_from = percent
   )
 ```
 
@@ -50,132 +82,172 @@ dat1 <- dat %>%
 
 ```{r}
 # number of rows
-nrow(dat1)
+nrow(dat3)
 
 # number of columns
-ncol(dat1)
+ncol(dat3)
 
-# data structure
-str(dat1)
+summary(dat3)
 
-# print forst few obs
-head(dat1)
+# print first few obs
+head(dat3)
 
 # print last few obs
-tail(dat1)
-
-# check the states in the analysis
-unique(dat1$LocationDesc)
-# note that District of Columbia, Puerto Rico, and a National percentage are 
-# included as a location
-
-# check location by year
-table(dat1$LocationDesc, dat1$YearStart)
-# notice that 2020 data is not available. otherwise, each location provides data
-# in each year
+tail(dat3)
 ```
 
-```{r}
-# summarize percent_walk_bike
-summary(dat1$percent_walk_bike)
+It looks like there is some missing data. Locate those missing
+observations.
 
-# Histogram
-ggplot(dat1, aes(x = percent_walk_bike)) +
-  geom_histogram(binwidth = 1, color = "black", alpha = 0.5) +
-  labs(title = "Distribution of Percent Walking/Biking to Work",
-       x = "Percent",
-       y = "Frequency") +
-  theme_minimal()
+```{r}
+# count NAs by column
+colSums(is.na(dat3))
+
+# filter data for only rows with NA values
+dat_na <- dat3 %>% filter(if_any(everything(), is.na))
 ```
 
-# More data processing
+`High Total Cholesterol` and `Hypertension` data was not collected for
+those aged less than 19 years. Remove these observations to focus on the
+relationship between the three measures.
+
+# Briefly, data processing
 
 ```{r}
-# make seperate datasets for state-level and national-level
-dat_state <- dat1 %>%
-  filter(LocationDesc != "National") %>%
-  # Create longitude variable from GeoLocation
-  mutate(longitude = as.numeric(sapply(
-    strsplit(gsub("[()]", "", as.character(GeoLocation)), ", "), function(x) x[2]
-  )))
+dat4 <- dat3 %>% 
+  dplyr::rename(
+    obesity = Obesity,
+    hypertension = Hypertension,
+    cholesterol = `High Total Cholesterol`
+  ) %>%
+  na.omit()
 
-dat_national <- dat1 %>%
-  filter(LocationDesc == "National")
+summary(dat4)
 ```
 
 # More EDA
 
+Explore each variable's categories and/or distributions.
+
 ```{r}
-# summarize location data
-dat_state %>%
-  count(LocationAbbr) %>%
-  arrange(desc(n))
+# categorical variables
+table(dat4$years, dat4$sex)
+table(dat4$years, dat4$age)
+table(dat4$sex, dat4$age)
 
-# create categorical variable "region"
-map("state")
-abline(v = -100, lwd = 3)
-text(-120, 30, "West")
-text(-75, 30, "East")
+# numeric variables
+summary(dat4$obesity)
+ggplot(dat4, aes(x = obesity)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") 
 
-dat_state$region <- factor(ifelse(dat_state$longitude < -100, "west", "east"))
+summary(dat4$cholesterol)
+ggplot(dat4, aes(x = cholesterol)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") 
 
-# summarize regions
-summary(dat_state$region)
-
-# 444 / 12 = 37 locations in the east
-# 180 / 12 = 15 locations in the west
+summary(dat4$hypertension)
+ggplot(dat4, aes(x = hypertension)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") 
 ```
 
+Lets look at the relationship between years and our three measurements.
+
 ```{r}
-# summarize by region
-tapply(dat_state$percent_walk_bike, dat_state$region, summary)
+# obesity
+plot(dat4$years, dat4$obesity)
+summary(lm(obesity ~ years, data=dat4))
 
-# west has a larger average than east but a much larger maximum value
+# hypertension
+plot(dat4$years, dat4$hypertension)
+summary(lm(hypertension ~ years, data=dat4))
 
-# plot percent_walk_bike by region
-ggplot(dat_state, aes(x = percent_walk_bike)) +
-  geom_histogram(binwidth = 1, color = "black", fill = "skyblue", alpha = 0.7) +
-  facet_wrap(~ region) +
-  theme_minimal()
-
-# count Data_Value by region
-
-dat_state %>%
-  mutate(Data_Value_Range = cut(Data_Value, breaks = seq(0, 20, by = 1), include.lowest = TRUE, right = FALSE)) %>%
-  group_by(region, Data_Value_Range) %>%
-  summarise(count = n(), .groups = "drop") %>%
-  arrange(region, Data_Value_Range)
+# cholesterol
+plot(dat4$years, dat4$cholesterol)
+summary(lm(cholesterol ~ years, data=dat4))
 ```
 
-```{r}
-# we know that in 2020 there was the covid-19 pandemic. let's see if that event
-# may have changed individual's habits. plot the 2019 data and the 2021 data
+For every one unit increase in year, there is a $1.2$ unit increase in
+obesity. For every one unit increase in year, there is a $0.9$ unit
+decrease in cholesterol.
 
-# 2019
-dat2019 <- dat1 %>%
+Lets look at the relationship between sex and our three measurements.
+
+```{r}
+# obesity
+plot(dat4$sex, dat4$obesity)
+summary(lm(obesity ~ sex, data=dat4))
+
+# hypertension
+plot(dat4$sex, dat4$hypertension)
+summary(lm(hypertension ~ sex, data=dat4))
+
+# cholesterol
+plot(dat4$sex, dat4$cholesterol)
+summary(lm(cholesterol ~ sex, data=dat4))
+```
+
+Male sex has $3.03$ unit decrease in obesity from female sex. Male sex
+has $3.45$ unit decrease in cholesterol from female sex.
+
+Lets look at the relationship between age and our three measurements.
+
+```{r}
+# obesity
+plot(dat4$age, dat4$obesity)
+dat_age1 <- dat4 %>%
   filter(
-    YearStart == 2019
+    age != 9
   )
+summary(lm(obesity ~ age, data=dat_age1))
 
-ggplot(dat2019, aes(x = LocationAbbr, y = percent_walk_bike)) +
-  geom_boxplot() +
-  geom_errorbar(aes(ymin = Low_Confidence_Limit, ymax = High_Confidence_Limit),
-                width = 0.2, color = "red") +
-  scale_y_continuous(limits = c(0, 20))
-
-# 2021
-dat2021 <- dat1 %>%
+dat_age2 <- dat4 %>%
   filter(
-    YearStart == 2021
+    age %in% c(4, 9)
   )
+summary(lm(obesity ~ age, data=dat_age2))
 
-ggplot(dat2021, aes(x = LocationAbbr, y = percent_walk_bike)) +
-  geom_boxplot() +
-  geom_errorbar(aes(ymin = Low_Confidence_Limit, ymax = High_Confidence_Limit),
-                width = 0.2, color = "red") +
-  scale_y_continuous(limits = c(0, 20))
-# it appears that there may be an overall decrease in walking or biking to work
-# but this would need to be explored further before drawing any conclusions
+
+# hypertension
+plot(dat4$age, dat4$hypertension)
+summary(lm(hypertension ~ age, data=dat4))
+
+# cholesterol
+plot(dat4$age, dat4$cholesterol)
+summary(lm(cholesterol ~ age, data=dat4))
 ```
 
+Excluding the final age category, for every subsequent age group, there
+is a $3.14$ unit increase in obesity. There is no difference in obesity
+between groups 4 and 9. For every subsequent age group, there is a
+$13.56$ unit increase in hypertension. For every subsequent age group,
+there is a $1.64$ unit increase in cholesterol.
 
+# EDA Conclusions
+
+There are 10 2-year `years` categories from 1999-2018. For each `years`
+category, there is an observation for each `sex` (Female, Male), and
+within each sex, an observation for each of 6 age groups
+(20-29,30-39,40-49,50-59,60-69,70 and over). This makes $6*2=12$
+observations each year and $10*12=120$ total observations in the data.
+Each observation has a value for percentage of population with
+`obesity`, high `cholesterol`, and `hypertension`. 
+
+Obesity overall has
+mean 35.31 with (30.57, 40.90) quartiles. For every one unit increase in
+year group, there is a $1.2$ unit increase in obesity. Male sex has
+$3.03$ unit decrease in obesity from female sex. Excluding the final age
+category, for every subsequent age group, there is a $3.14$ unit
+increase in obesity. There is no difference in obesity between age
+categories "20-29" and "70 and over".
+
+Hypertension overall has mean 49.98 with (30.65, 70.90) quartiles. There
+is no obvious relationship between hypertension and year or sex. For
+every subsequent age group, there is a $13.56$ unit increase in
+hypertension.
+
+Cholesterol overall has mean 14.35 with (8.5, 18.55) quartiles. For
+every one unit increase in year, there is a $0.9$ unit decrease in
+cholesterol. Male sex has $3.45$ unit decrease in cholesterol from
+female sex. For every subsequent age group, there is a $1.64$ unit
+increase in cholesterol.
+
+# END OF PART 1
