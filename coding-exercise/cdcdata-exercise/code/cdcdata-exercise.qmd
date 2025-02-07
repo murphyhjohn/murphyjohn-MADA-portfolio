@@ -251,3 +251,276 @@ female sex. For every subsequent age group, there is a $1.64$ unit
 increase in cholesterol.
 
 # END OF PART 1
+
+
+
+
+# This section contributed by Asmith Joseph 
+
+
+
+# Running the Data 
+To read the data, I set my working directory to match the project structure using setwd("C:/Users/ajose35/Desktop/Ecole/MADA-course/murphyjohn-MADA-portfolio/coding-exercise"). Since the dataset was located in a different folder than expected, I used here::i_am("cdcdata-exercise/data/raw/rawdata.csv") to manually define the project root without modifying my collaborator’s code. After ensuring that here correctly resolved the file path by running file.exists(here::here("cdcdata-exercise/data/raw/rawdata.csv")), I successfully loaded the dataset using dat <- read.csv(here::here("cdcdata-exercise/data/raw/rawdata.csv")). This approach allowed me to work with the existing project structure while maintaining compatibility with my collaborator’s code.
+
+
+
+# Generate Synthetic Data with the Same Structure
+
+Based on the summary the dataset  contains:
+
+Categorical variables: Survey.Years, Sex, Age.Group, Measure
+Numeric variables: Percent, Standard.Error, Lower.95..CI.Limit, Upper.95..CI.Limit. The create the Synthetic data I used this prompt "Generate R code to create synthetic data with 950 observations, including categorical and numeric variables that resemble the original dataset structure." 
+
+
+
+```{r}
+# Loading necessary libraries
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(fabricatr)  # For realistic synthetic data
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Creating synthetic dataset
+synthetic_data <- tibble(
+  Survey.Years = sample(c("1999-2000", "2001-2002", "2003-2004",
+                          "2005-2006", "2007-2008", "2009-2010",
+                          "2011-2012", "2013-2014", "2015-2016", "2017-2018"), 
+                        950, replace = TRUE),
+  Sex = sample(c("Male", "Female"), 950, replace = TRUE),
+  Age.Group = sample(c("2-5", "6-11", "12-19", "20-29", "30-39", "40-49",
+                       "50-59", "60-69", "70 and over"), 950, replace = TRUE),
+  Measure = sample(c("Obesity", "High Total Cholesterol", "Hypertension"), 950, replace = TRUE),
+  Percent = round(runif(950, min = 3, max = 90), 1),  # Simulated percentages
+  Standard.Error = round(runif(950, min = 0.5, max = 7.5), 2),
+  Lower.95..CI.Limit = Percent - runif(950, min = 1.5, max = 8.0),
+  Upper.95..CI.Limit = Percent + runif(950, min = 1.5, max = 8.0)
+)
+
+# Saving synthetic data
+write.csv(synthetic_data, "synthetic_data.csv", row.names = FALSE)
+
+# View first few rows
+head(synthetic_data)
+
+```
+
+
+# Cleaning  and Processing the Synthetic Data
+
+In the cleaning process I performed data selection, filtering, and transformation.
+
+```{r}
+# Cleaning  and Processing the Synthetic Data
+
+# Selecting relevant variables
+synthetic_dat1 <- synthetic_data %>%
+  select(
+    years = Survey.Years,
+    sex = Sex,
+    age = Age.Group,
+    measure = Measure,
+    percent = Percent
+  )
+
+# Filtering granular data - exclude "All" and broad age categories
+synthetic_dat2 <- synthetic_dat1 %>%
+  filter(
+    sex != "All",
+    age != "20 and over",
+    age != "2-19"
+  ) %>%
+  mutate(
+    age_factor = factor(age, levels = c(
+      "2-5", "6-11", "12-19", "20-29", "30-39", "40-49",
+      "50-59", "60-69", "70 and over")
+    ),
+    age = as.numeric(age_factor),
+    sex = factor(sex, levels = c("Female", "Male")),
+    years_factor = factor(years, levels = c(
+      "1999-2000", "2001-2002", "2003-2004",
+      "2005-2006", "2007-2008", "2009-2010",
+      "2011-2012", "2013-2014", "2015-2016", "2017-2018"
+    )),
+    years = as.numeric(years_factor)
+  )
+
+# CHECK FOR DUPLICATES BEFORE PIVOTING
+synthetic_dat2 %>%
+  group_by(years, sex, age, measure) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  filter(n > 1)
+
+# Summarizing percent values to ensure uniqueness before pivoting
+synthetic_dat3 <- synthetic_dat2 %>%
+  group_by(years, sex, age, measure) %>%
+  summarise(percent = mean(percent, na.rm = TRUE), .groups = "drop") %>%  # Take mean to resolve duplicates
+  tidyr::pivot_wider(
+    names_from = measure,
+    values_from = percent
+  )
+
+# Rename columns to match cleaned dataset
+synthetic_dat4 <- synthetic_dat3 %>%
+  rename(
+    obesity = Obesity,
+    hypertension = Hypertension,
+    cholesterol = `High Total Cholesterol`
+  ) %>%
+  na.omit()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Summarizing and Exploring the Synthetic Data
+
+```{r}
+summary(synthetic_dat4)
+
+
+colSums(is.na(synthetic_dat4))
+
+```
+
+```{r}
+sum(is.na(synthetic_dat4$obesity))  # Check number of NA values in obesity
+
+```
+
+
+
+
+# Visualizion 
+
+```{r}
+#Histogram of Obesity Rates
+
+
+ggplot(synthetic_dat4 %>% filter(!is.na(obesity)), aes(x = obesity)) +
+  geom_histogram(binwidth = 5, fill = "blue", alpha = 0.6, color = "black") +
+  theme_minimal() +
+  labs(title = "Obesity Rate Distribution ", x = "Obesity Rate", y = "Count")
+
+
+```
+
+
+
+```{r}
+#Boxplot of Cholesterol by Sex
+
+ggplot(synthetic_dat4, aes(x = sex, y = cholesterol, fill = sex)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Cholesterol Levels by Sex", x = "Sex", y = "Cholesterol Level")
+
+```
+
+
+
+```{r}
+# Line Plot of Hypertension Over Years
+ggplot(synthetic_dat4, aes(x = years, y = hypertension, color = sex)) +
+  geom_point(alpha = 0.5) +  # Add scatter points for better visibility
+  geom_smooth(method = "loess", se = FALSE, size = 1) +  # Add smoothed trend line
+  theme_minimal() +
+  labs(title = "Hypertension Levels Over Years", 
+       x = "Year", y = "Hypertension Rate") +
+  scale_x_continuous(breaks = unique(synthetic_dat4$years))  # Ensure year labels are readable
+
+
+```
+
+
+```{r}
+# Bar Chart Hypertension Levels by Year
+ggplot(synthetic_dat4, aes(x = as.factor(years), y = hypertension, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") +  
+  theme_minimal() +
+  labs(title = "Hypertension Levels by Year", 
+       x = "Year", y = "Hypertension Rate") +
+  scale_fill_manual(values = c("blue", "pink"))  # Custom colors for Male/Female
+
+```
+
+
+# Regression Models
+Running Regression Models on the Synthetic Data Because these models will help analyze trends, test hypotheses, and validate data structure. Addiionally, they will assess associations between health indicators and predictors, checking for statistical significance and identifying gaps where more variables may improve predictions.
+
+```{r}
+# Looking at Obesity Trends Over Years
+summary(lm(obesity ~ years, data = synthetic_dat4))
+
+
+# Looking at Hypertension by Sex
+summary(lm(hypertension ~ sex, data = synthetic_dat4))
+
+
+
+# Looking at Cholesterol by Age
+summary(lm(cholesterol ~ age, data = synthetic_dat4))
+
+```
+
+# Interpretation of Regression Outputs
+Model	                  Predictor   	       Effect	        Significance (p-value)	  Interpretation
+Obesity ~ Years	        Years	              -0.488 (↓)	    0.447	                    No significant trend in obesity over time
+Hypertension ~ Sex    	Male vs. Female   	+1.711 (↑)	    0.653	                    No significant difference in hypertension between sexes
+Cholesterol ~ Age	      Age	                +0.164 (↑)	    0.811	                    No significant impact of age on cholesterol
+
+The regression analysis shows no significant relationships between obesity, hypertension, or cholesterol and their predictors. Obesity trends over time show a slight decline (-0.488 per year), but this effect is not significant (p = 0.447). Hypertension rates are slightly higher in males (+1.711), but the difference is insignificant (p = 0.653). Cholesterol levels increase slightly with age (+0.164), but age has no meaningful impact (p = 0.811).
+
+All models have low R-squared values, indicating weak predictive power. The dataset likely lacks key variables or requires better transformations to capture meaningful patterns. 
+
+
+
+
+#  Comparing the Synthetic and Original Data
+This comparaison will allow me to check similarity, compare means and standard deviations.
+
+
+```{r}
+#  Comparing the Synthetic and Original Data
+
+comparison_table <- tibble(
+  Variable = c("Obesity", "Cholesterol", "Hypertension"),
+  Original_Mean = c(35.31, 14.35, 49.98),  # Replace with real means
+  Synthetic_Mean = c(mean(synthetic_dat4$obesity), mean(synthetic_dat4$cholesterol), mean(synthetic_dat4$hypertension)),
+  Original_SD = c(6.58, 6.94, 24.05),
+  Synthetic_SD = c(sd(synthetic_dat4$obesity), sd(synthetic_dat4$cholesterol), sd(synthetic_dat4$hypertension))
+)
+
+print(comparison_table)
+
+```
+
+
+
+The comparison between the synthetic and original datasets shows some differences in means and standard deviations for obesity, cholesterol, and hypertension. Obesity levels in the synthetic data (Mean = 46.36, SD = 17.97) are higher than the original (Mean = 35.31, SD = 6.58), suggesting a wider distribution. Cholesterol levels also appear inflated in the synthetic dataset (Mean = 45.90 vs. 14.35), with a higher standard deviation (17.67 vs. 6.94), indicating greater variability. Hypertension levels, however, remain closer to the original data (Mean = 48.25 vs. 49.98, SD = 19.10 vs. 24.05), showing a better match.
+
+Overall, while hypertension is relatively well-aligned, obesity and cholesterol in the synthetic dataset deviate significantly from the original, suggesting the need for better parameter tuning to improve realism.
+
+
+
+
