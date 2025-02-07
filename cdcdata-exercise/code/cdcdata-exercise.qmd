@@ -47,7 +47,7 @@ dat1 <- dat %>%
 ```
 
 ```{r}
-# filter for more granular data - seperate by sex, age categories
+# filter for more granular data - separate by sex, age categories
 dat2 <- dat1 %>%
   filter(
     sex != "All",
@@ -252,17 +252,10 @@ increase in cholesterol.
 
 # END OF PART 1
 
-
-
-
 # This section contributed by Asmith Joseph 
-
-
 
 # Running the Data 
 To read the data, I set my working directory to match the project structure using setwd("C:/Users/ajose35/Desktop/Ecole/MADA-course/murphyjohn-MADA-portfolio/coding-exercise"). Since the dataset was located in a different folder than expected, I used here::i_am("cdcdata-exercise/data/raw/rawdata.csv") to manually define the project root without modifying my collaborator’s code. After ensuring that here correctly resolved the file path by running file.exists(here::here("cdcdata-exercise/data/raw/rawdata.csv")), I successfully loaded the dataset using dat <- read.csv(here::here("cdcdata-exercise/data/raw/rawdata.csv")). This approach allowed me to work with the existing project structure while maintaining compatibility with my collaborator’s code.
-
-
 
 # Generate Synthetic Data with the Same Structure
 
@@ -270,8 +263,6 @@ Based on the summary the dataset  contains:
 
 Categorical variables: Survey.Years, Sex, Age.Group, Measure
 Numeric variables: Percent, Standard.Error, Lower.95..CI.Limit, Upper.95..CI.Limit. The create the Synthetic data I used this prompt "Generate R code to create synthetic data with 950 observations, including categorical and numeric variables that resemble the original dataset structure." 
-
-
 
 ```{r}
 # Loading necessary libraries
@@ -306,7 +297,6 @@ write.csv(synthetic_data, "synthetic_data.csv", row.names = FALSE)
 head(synthetic_data)
 
 ```
-
 
 # Cleaning  and Processing the Synthetic Data
 
@@ -373,26 +363,6 @@ synthetic_dat4 <- synthetic_dat3 %>%
 
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Summarizing and Exploring the Synthetic Data
 
 ```{r}
@@ -408,9 +378,6 @@ sum(is.na(synthetic_dat4$obesity))  # Check number of NA values in obesity
 
 ```
 
-
-
-
 # Visualizion 
 
 ```{r}
@@ -425,8 +392,6 @@ ggplot(synthetic_dat4 %>% filter(!is.na(obesity)), aes(x = obesity)) +
 
 ```
 
-
-
 ```{r}
 #Boxplot of Cholesterol by Sex
 
@@ -436,8 +401,6 @@ ggplot(synthetic_dat4, aes(x = sex, y = cholesterol, fill = sex)) +
   labs(title = "Cholesterol Levels by Sex", x = "Sex", y = "Cholesterol Level")
 
 ```
-
-
 
 ```{r}
 # Line Plot of Hypertension Over Years
@@ -452,7 +415,6 @@ ggplot(synthetic_dat4, aes(x = years, y = hypertension, color = sex)) +
 
 ```
 
-
 ```{r}
 # Bar Chart Hypertension Levels by Year
 ggplot(synthetic_dat4, aes(x = as.factor(years), y = hypertension, fill = sex)) +
@@ -463,7 +425,6 @@ ggplot(synthetic_dat4, aes(x = as.factor(years), y = hypertension, fill = sex)) 
   scale_fill_manual(values = c("blue", "pink"))  # Custom colors for Male/Female
 
 ```
-
 
 # Regression Models
 Running Regression Models on the Synthetic Data Because these models will help analyze trends, test hypotheses, and validate data structure. Addiionally, they will assess associations between health indicators and predictors, checking for statistical significance and identifying gaps where more variables may improve predictions.
@@ -493,12 +454,8 @@ The regression analysis shows no significant relationships between obesity, hype
 
 All models have low R-squared values, indicating weak predictive power. The dataset likely lacks key variables or requires better transformations to capture meaningful patterns. 
 
-
-
-
 #  Comparing the Synthetic and Original Data
-This comparaison will allow me to check similarity, compare means and standard deviations.
-
+This comparison will allow me to check similarity, compare means and standard deviations.
 
 ```{r}
 #  Comparing the Synthetic and Original Data
@@ -515,12 +472,6 @@ print(comparison_table)
 
 ```
 
-
-
 The comparison between the synthetic and original datasets shows some differences in means and standard deviations for obesity, cholesterol, and hypertension. Obesity levels in the synthetic data (Mean = 46.36, SD = 17.97) are higher than the original (Mean = 35.31, SD = 6.58), suggesting a wider distribution. Cholesterol levels also appear inflated in the synthetic dataset (Mean = 45.90 vs. 14.35), with a higher standard deviation (17.67 vs. 6.94), indicating greater variability. Hypertension levels, however, remain closer to the original data (Mean = 48.25 vs. 49.98, SD = 19.10 vs. 24.05), showing a better match.
 
 Overall, while hypertension is relatively well-aligned, obesity and cholesterol in the synthetic dataset deviate significantly from the original, suggesting the need for better parameter tuning to improve realism.
-
-
-
-
