@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -164,7 +198,55 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Placeholder file for the future data/results presentation exercise.</p>
+<p>I will be reproducing a visualization from <a href="https://ourworldindata.org/food-choice-vs-eating-local">this</a> article by Hannah Ritchie in the <em>Our World in Data</em> journal. The data was free for download with the graph, which I’ve pasted below. AN interactive version of the chart can be found at the link. We’ll see if I have time to reproduce the interactive version as well.</p>
+<div style="text-align: center;">
+<p><img src="food-emissions-supply-chain.png" class="img-fluid"></p>
+</div>
+<p>Per the instructions, I asked ChatGPT to write me code that will reproduce the figure. I uploaded the above png and wrote “I have the data in this graph. Write R code to recreate it”. I received the following output.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Data</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>food_items <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Beef (beef herd)"</span>, <span class="st">"Dark Chocolate"</span>, <span class="st">"Lamb &amp; Mutton"</span>, <span class="st">"Beef (dairy herd)"</span>, <span class="st">"Coffee"</span>, </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Shrimps (farmed)"</span>, <span class="st">"Cheese"</span>, <span class="st">"Fish (farmed)"</span>, <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>, <span class="st">"Palm Oil"</span>, </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Olive Oil"</span>, <span class="st">"Eggs"</span>, <span class="st">"Rice"</span>, <span class="st">"Sunflower Oil"</span>, <span class="st">"Tofu"</span>, <span class="st">"Milk"</span>, <span class="st">"Tomatoes"</span>, <span class="st">"Peas"</span>, <span class="st">"Bananas"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>total_emissions <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">99</span>, <span class="dv">47</span>, <span class="dv">40</span>, <span class="dv">33</span>, <span class="dv">29</span>, <span class="dv">27</span>, <span class="dv">24</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="fl">9.9</span>, <span class="fl">7.3</span>, <span class="fl">5.7</span>, <span class="fl">4.7</span>, <span class="fl">4.5</span>, <span class="fl">3.6</span>, <span class="fl">3.2</span>, <span class="fl">3.2</span>, <span class="fl">2.1</span>, <span class="fl">0.98</span>, <span class="fl">0.89</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>categories <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Land use change"</span>, <span class="st">"Farm"</span>, <span class="st">"Animal feed"</span>, <span class="st">"Processing"</span>, <span class="st">"Transport"</span>, <span class="st">"Retail"</span>, <span class="st">"Packaging"</span>, <span class="st">"Losses"</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Example breakdown of emissions (these values should be adjusted based on actual data)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>land_use <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">60</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">15</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">8</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">4</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>farm <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">8</span>, <span class="dv">6</span>, <span class="dv">4</span>, <span class="dv">3</span>, <span class="fl">2.5</span>, <span class="dv">2</span>, <span class="fl">1.5</span>, <span class="fl">1.2</span>, <span class="dv">1</span>, <span class="fl">0.8</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>animal_feed <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="fl">0.8</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.05</span>, <span class="fl">0.02</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>processing <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="fl">1.5</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="fl">1.5</span>, <span class="fl">1.2</span>, <span class="fl">0.8</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.15</span>, <span class="fl">0.12</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.05</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>transport <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="fl">0.8</span>, <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">1</span>, <span class="fl">0.9</span>, <span class="fl">0.7</span>, <span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.25</span>, <span class="fl">0.2</span>, <span class="fl">0.18</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.05</span>, <span class="fl">0.03</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>retail <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.05</span>, <span class="fl">0.04</span>, <span class="fl">0.03</span>, <span class="fl">0.02</span>, <span class="fl">0.015</span>, <span class="fl">0.01</span>, <span class="fl">0.008</span>, <span class="fl">0.006</span>, <span class="fl">0.004</span>, <span class="fl">0.002</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>packaging <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">0.8</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.05</span>, <span class="fl">0.04</span>, <span class="fl">0.03</span>, <span class="fl">0.02</span>, <span class="fl">0.015</span>, <span class="fl">0.01</span>, <span class="fl">0.008</span>, <span class="fl">0.006</span>, <span class="fl">0.004</span>, <span class="fl">0.002</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>losses <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>, <span class="fl">0.06</span>, <span class="fl">0.05</span>, <span class="fl">0.03</span>, <span class="fl">0.025</span>, <span class="fl">0.02</span>, <span class="fl">0.015</span>, <span class="fl">0.012</span>, <span class="fl">0.01</span>, <span class="fl">0.008</span>, <span class="fl">0.006</span>, <span class="fl">0.004</span>, <span class="fl">0.002</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a data frame</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Food =</span> <span class="fu">rep</span>(food_items, <span class="at">each =</span> <span class="dv">8</span>), </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                 <span class="at">Category =</span> <span class="fu">rep</span>(categories, <span class="at">times =</span> <span class="fu">length</span>(food_items)), </span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                 <span class="at">Emissions =</span> <span class="fu">c</span>(land_use, farm, animal_feed, processing, transport, retail, packaging, losses))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the data</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Emissions, <span class="at">y =</span> <span class="fu">reorder</span>(Food, <span class="sc">-</span>Emissions), <span class="at">fill =</span> Category)) <span class="sc">+</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Food: Greenhouse Gas Emissions Across the Supply Chain"</span>,</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Emissions (kg CO₂eq per kg of food)"</span>,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Food Item"</span>) <span class="sc">+</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#8DA0CB"</span>, <span class="st">"#E78AC3"</span>, <span class="st">"#A6D854"</span>, <span class="st">"#FFD92F"</span>, <span class="st">"#E5C494"</span>, <span class="st">"#B3B3B3"</span>, <span class="st">"#66C2A5"</span>, <span class="st">"#FC8D62"</span>)) <span class="sc">+</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="presentation-exercise_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>That’s pretty solid if you ask me. I don’t forsee ChatGPT improving the figure much so I’m going to take over from here. Anything AI can do, I can do better😊.</p>
 
 
 

@@ -291,7 +291,7 @@ synthetic_data <- tibble(
 )
 
 # Saving synthetic data
-write.csv(synthetic_data, "synthetic_data.csv", row.names = FALSE)
+#write.csv(synthetic_data, "synthetic_data.csv", row.names = FALSE)
 
 # View first few rows
 head(synthetic_data)
