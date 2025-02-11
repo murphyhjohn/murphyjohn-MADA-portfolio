@@ -54,7 +54,7 @@ ggplot(df, aes(x = Emissions, y = reorder(Food, -Emissions), fill = Category)) +
   theme_minimal()
 ```
 
-That's pretty solid if you ask me. The figure could use some cleaning up of labels, text, and colors. It also of course needs to consider the real data. I don't foresee ChatGPT improving the figure much more without some user-machine wrangling so I'm going to take over from here. Anything AI can do, I can (theoretically) do😊.
+That's pretty solid if you ask me. The figure could use some cleaning up on the labels, text, and colors. It also of course needs to consider the real data. I don't foresee ChatGPT improving the figure much more without some user-machine wrangling so I'm going to take over from here. Anything AI can do, I can (theoretically) do😊.
 
 ## MJ's Attempt
 
@@ -63,6 +63,7 @@ That's pretty solid if you ask me. The figure could use some cleaning up of labe
 ```{r}
 # load packages
 library(dplyr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -174,24 +175,6 @@ ggplot(dat3, aes(x = emissions, y = reorder(food_items, emissions), fill = categ
 
 I'll be using the same data that created the figure above to create a table. To make it more interesting, I'm going to use the full dataset to subset by food source/group.
 
-Formatted text which can be bold, italic, etc.
-- certainly in the title etc.
-
-Colored text or highlighted cells
-- highlight the cell with the greatest emmission group maybe?
-
-Additional text outside of the regular table structure like spanning column headers or correctly attributed footnotes
-- footnote on greenhouse gas emissions?
-
-A descriptive caption explaining the useful information summary that your table represents.
-
-Additionally, your table must contain at least one of the following advanced features:
-
-A column with some type of image for the values, which could potentially be a data visualization (e.g. sparklines).
-Automatically calculated summary statistics (summary statistics that you calculate manually do not count towards this objective)
-Automatically applied (not manual) conditional formatting (potentially overlapping with formatted or colored text/cells)
-Interactive features
-
 ## Setup
 ```{r}
 # load packages
@@ -199,7 +182,7 @@ library(gt)
 library(gtsummary)
 ```
 
-# Data processing
+## Data processing
 ```{r}
 # put food items into categories
 dat5 <- dat1 %>%
@@ -228,8 +211,8 @@ dat5 <- dat1 %>%
 ```
 
 ```{r}
-# summary stats by hand
-format_ci <- function(df, d = 2) {
+# summary stats
+format_ci <- function(df, d = 1) {
 	fmt_str <- paste0("%.", d, "f")
 	out <- paste0(
 		sprintf(fmt_str, df$y), " (",
@@ -240,30 +223,107 @@ format_ci <- function(df, d = 2) {
 	return(out)
 }
 
-tab <- dat5 %>%
+# dataframe including summary statistics for table
+dat6 <- dat5 %>%
   group_by(food_group) %>%
   summarise(
-    land = ggplot2::mean_cl_boot(land_use) %>% format_ci(),
-		farm = ggplot2::mean_cl_boot(farm) %>% format_ci(),
-		animal = ggplot2::mean_cl_boot(animal_feed) %>% format_ci(),
-		procesing = ggplot2::mean_cl_boot(processing) %>% format_ci(),
-		transport = ggplot2::mean_cl_boot(transport) %>% format_ci(),
-		retail = ggplot2::mean_cl_boot(retail) %>% format_ci(),
-		pack = ggplot2::mean_cl_boot(packaging) |> format_ci(),
-		losses = ggplot2::mean_cl_boot(losses) |> format_ci(),
+    n = n(),
+    land = ggplot2::mean_cl_boot(land_use, B=1000) %>% format_ci(),
+    farm = ggplot2::mean_cl_boot(farm, B=1000) %>% format_ci(),
+    animal = ggplot2::mean_cl_boot(animal_feed, B=1000) %>% format_ci(),
+    processing = ggplot2::mean_cl_boot(processing, B=1000) %>% format_ci(),
+    transport = ggplot2::mean_cl_boot(transport, B=1000) %>% format_ci(),
+    retail = ggplot2::mean_cl_boot(retail, B=1000) %>% format_ci(),
+    pack = ggplot2::mean_cl_boot(packaging, B=1000) |> format_ci(),
+    losses = ggplot2::mean_cl_boot(losses, B=1000) |> format_ci(),
   ) %>%
+  mutate(
+    symbol = c(
+      "cheese", "apple-whole", "burger", "wheat-awn", "wine-glass", "seedling",
+      "bottle-droplet", "leaf", "cubes-stacked", "carrot", "fish"
+    )) %>%
+  select(
+    food_group, symbol, n, land, farm, animal, processing, 
+    transport, retail, pack, losses
+  )
+```
+
+## Create table
+
+```{r}
+tab <- dat6 %>%
   gt(rowname_col = "food_group") %>%
+  # label columns
   cols_label(
+    symbol = "",
     land = "Land use change",
 		farm = "Farm",
 		animal = "Animal feed",
-		procesing = "Processing",
+		processing = "Processing",
 		transport = "Transport",
 		retail = "Retail",
 		pack = "Packaging",
 		losses = "Losses"
-  )
+  ) %>%
+  # center cell contents
+  cols_align(align = "center", columns = -food_group) %>%
+  
+  # aesthetic specifics ========================================================
+  
+  tab_header(
+    title = md(paste("Average Emissions", 
+                     fontawesome::fa("fire"), "by Food Group"))
+    )%>%
+  
+  tab_footnote(
+    footnote = "Mean (95% bootstrap CI; 1000 resamples)",
+    locations = cells_column_labels(columns = c(land, farm, animal, processing,
+                                                transport, retail, pack, losses))
+  ) %>%
+  
+  # stub and label text
+   tab_style(
+    style = cell_text(
+      size = "smaller",
+      weight = "bold",
+      transform = "uppercase"
+    ),
+    locations = list(cells_column_labels(), cells_stub())
+  ) %>%
+  
+  # cell text
+  tab_style(
+    style = cell_text(
+      size = "smaller"),
+    locations = cells_body()
+   ) %>%
+  
+  # title and cell fill
+   tab_style(
+    style = cell_fill(color = "gray98"),
+    locations = list(cells_title(), cells_body(columns = -symbol))
+  ) %>%
+  
+  # symbol specific fill
+  tab_style(
+    style = cell_fill(color = "darksalmon" %>% adjust_luminance(steps = 1)),
+    locations = cells_body(columns = symbol)
+  ) %>%
+  
+  # insert symbols
+   fmt_icon(columns = symbol) %>%
+  
+  # caption
+   tab_caption(caption = md("Average greenhouse gas emissions (CO2kg) per kilogram of food product, categorized by food group. Mean emission values are included, along with the corresponding 95% bootstrap confidence intervals, for each of the key stages in the food production and supply chain: land use change, farming, animal feed, processing, transport, retail, packaging, and losses.")) %>%
+  
+  # size adjustments
+   cols_width(
+     symbol ~ px(25),
+     n ~ px(25)
+  ) %>%
+  tab_options(table.font.size = 14)
 
+# print table
 tab
 ```
 

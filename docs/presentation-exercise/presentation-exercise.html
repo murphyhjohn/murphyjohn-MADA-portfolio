@@ -253,7 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>That’s pretty solid if you ask me. The figure could use some cleaning up of labels, text, and colors. It also of course needs to consider the real data. I don’t foresee ChatGPT improving the figure much more without some user-machine wrangling so I’m going to take over from here. Anything AI can do, I can (theoretically) do😊.</p>
+<p>That’s pretty solid if you ask me. The figure could use some cleaning up on the labels, text, and colors. It also of course needs to consider the real data. I don’t foresee ChatGPT improving the figure much more without some user-machine wrangling so I’m going to take over from here. Anything AI can do, I can (theoretically) do😊.</p>
 </section>
 <section id="mjs-attempt" class="level2">
 <h2 class="anchored" data-anchor-id="mjs-attempt">MJ’s Attempt</h2>
@@ -276,111 +276,112 @@ Attaching package: 'dplyr'</code></pre>
 
     intersect, setdiff, setequal, union</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load data</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"presentation-exercise/data/food-emissions-supply-chain.csv"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load data</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"presentation-exercise/data/food-emissions-supply-chain.csv"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="data-processing" class="level3">
 <h3 class="anchored" data-anchor-id="data-processing">Data processing</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dat1 <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_items =</span> Entity,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_use =</span> food_emissions_land_use,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">farm =</span> food_emissions_farm,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal_feed =</span> food_emissions_animal_feed,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">processing =</span> food_emissions_processing,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">transport =</span> food_emissions_transport,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">retail =</span> food_emissions_retail,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">packaging =</span> food_emissions_packaging,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">losses =</span> food_emissions_losses</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Code, <span class="sc">-</span>Year) <span class="sc">%&gt;%</span> <span class="co"># remove unused columns</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_emissions =</span> <span class="fu">rowSums</span>(<span class="fu">select</span>(</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>      ., land_use, farm, animal_feed, processing, </span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>      transport, retail, packaging, losses))</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co"># pivot longer for plotting bars</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>dat2 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data includes more items then shown on graph</span></span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    food_items <span class="sc">%in%</span> <span class="fu">c</span>(</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (beef herd)"</span>, <span class="st">"Dark Chocolate"</span>, <span class="st">"Lamb &amp; Mutton"</span>, </span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (dairy herd)"</span>, <span class="st">"Coffee"</span>, <span class="st">"Shrimps (farmed)"</span>, <span class="st">"Cheese"</span>, </span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Fish (farmed)"</span>, <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>, <span class="st">"Palm Oil"</span>, </span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Olive Oil"</span>, <span class="st">"Eggs"</span>, <span class="st">"Rice"</span>, <span class="st">"Sunflower Oil"</span>, <span class="st">"Tofu"</span>, <span class="st">"Milk"</span>, </span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Tomatoes"</span>, <span class="st">"Peas"</span>, <span class="st">"Bananas"</span></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span>food_items,</span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"category"</span>,</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"emissions"</span></span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>  ) </span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co"># remove "total" row, clean up labels</span></span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>dat3 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">!=</span> <span class="st">"total_emissions"</span></span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># clean category labels</span></span>
-<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"land_use"</span> <span class="sc">~</span> <span class="st">"Land use change"</span>,</span>
-<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"farm"</span> <span class="sc">~</span> <span class="st">"Farm"</span>,</span>
-<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"animal_feed"</span> <span class="sc">~</span> <span class="st">"Animal feed"</span>,</span>
-<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"processing"</span> <span class="sc">~</span> <span class="st">"Processing"</span>,</span>
-<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"transport"</span> <span class="sc">~</span> <span class="st">"Transport"</span>,</span>
-<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"retail"</span> <span class="sc">~</span> <span class="st">"Retail"</span>, </span>
-<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"packaging"</span> <span class="sc">~</span> <span class="st">"Packaging"</span>,</span>
-<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"losses"</span> <span class="sc">~</span> <span class="st">"Losses"</span>, </span>
-<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> category</span>
-<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>    ), </span>
-<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># for ordering on plot</span></span>
-<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">factor</span>(category, <span class="at">levels =</span> <span class="fu">c</span>(</span>
-<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Losses"</span>, <span class="st">"Packaging"</span>, <span class="st">"Retail"</span>, <span class="st">"Transport"</span>, <span class="st">"Processing"</span>, </span>
-<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Animal feed"</span>, <span class="st">"Farm"</span>, <span class="st">"Land use change"</span></span>
-<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>    ))</span>
-<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a><span class="co"># reserve a separate dataset with total emissions</span></span>
-<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>dat4 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
-<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">==</span> <span class="st">"total_emissions"</span></span>
-<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dat1 <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_items =</span> Entity,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_use =</span> food_emissions_land_use,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">farm =</span> food_emissions_farm,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal_feed =</span> food_emissions_animal_feed,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">processing =</span> food_emissions_processing,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">transport =</span> food_emissions_transport,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">retail =</span> food_emissions_retail,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">packaging =</span> food_emissions_packaging,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">losses =</span> food_emissions_losses</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Code, <span class="sc">-</span>Year) <span class="sc">%&gt;%</span> <span class="co"># remove unused columns</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_emissions =</span> <span class="fu">rowSums</span>(<span class="fu">select</span>(</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>      ., land_use, farm, animal_feed, processing, </span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>      transport, retail, packaging, losses))</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co"># pivot longer for plotting bars</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>dat2 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data includes more items then shown on graph</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    food_items <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (beef herd)"</span>, <span class="st">"Dark Chocolate"</span>, <span class="st">"Lamb &amp; Mutton"</span>, </span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (dairy herd)"</span>, <span class="st">"Coffee"</span>, <span class="st">"Shrimps (farmed)"</span>, <span class="st">"Cheese"</span>, </span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Fish (farmed)"</span>, <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>, <span class="st">"Palm Oil"</span>, </span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Olive Oil"</span>, <span class="st">"Eggs"</span>, <span class="st">"Rice"</span>, <span class="st">"Sunflower Oil"</span>, <span class="st">"Tofu"</span>, <span class="st">"Milk"</span>, </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Tomatoes"</span>, <span class="st">"Peas"</span>, <span class="st">"Bananas"</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span>food_items,</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"category"</span>,</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"emissions"</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="co"># remove "total" row, clean up labels</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>dat3 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">!=</span> <span class="st">"total_emissions"</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># clean category labels</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"land_use"</span> <span class="sc">~</span> <span class="st">"Land use change"</span>,</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"farm"</span> <span class="sc">~</span> <span class="st">"Farm"</span>,</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"animal_feed"</span> <span class="sc">~</span> <span class="st">"Animal feed"</span>,</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"processing"</span> <span class="sc">~</span> <span class="st">"Processing"</span>,</span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"transport"</span> <span class="sc">~</span> <span class="st">"Transport"</span>,</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"retail"</span> <span class="sc">~</span> <span class="st">"Retail"</span>, </span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"packaging"</span> <span class="sc">~</span> <span class="st">"Packaging"</span>,</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"losses"</span> <span class="sc">~</span> <span class="st">"Losses"</span>, </span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> category</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>    ), </span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># for ordering on plot</span></span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">factor</span>(category, <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Losses"</span>, <span class="st">"Packaging"</span>, <span class="st">"Retail"</span>, <span class="st">"Transport"</span>, <span class="st">"Processing"</span>, </span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Animal feed"</span>, <span class="st">"Farm"</span>, <span class="st">"Land use change"</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="co"># reserve a separate dataset with total emissions</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>dat4 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">==</span> <span class="st">"total_emissions"</span></span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="plot-the-data" class="level3">
 <h3 class="anchored" data-anchor-id="plot-the-data">Plot the data</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dat3, <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> <span class="fu">reorder</span>(food_items, emissions), <span class="at">fill =</span> category)) <span class="sc">+</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Food: greenhouse gas emissions across the supply chain"</span>,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Greenhouse gas emissions are measured in kilograms of carbon dioxide-equivalents (CO2eq) per kilogram of food."</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="cn">NULL</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>       )<span class="sc">+</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkseagreen"</span>, <span class="st">"burlywood"</span>, <span class="st">"orange"</span>, <span class="st">"cornflowerblue"</span>, <span class="st">"indianred"</span>, <span class="st">"yellow"</span>, <span class="st">"lightslategray"</span>, <span class="st">"lavender"</span>),</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">limits =</span> <span class="fu">rev</span>(<span class="fu">levels</span>(dat3<span class="sc">$</span>category))) <span class="sc">+</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">20</span>),</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">11</span>),</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>))<span class="sc">+</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> dat4, </span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> food_items, </span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>                <span class="at">label =</span> <span class="fu">paste</span>(<span class="fu">round</span>(emissions, <span class="dv">1</span>), <span class="st">"kg"</span>)), </span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.05</span>,</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dat3, <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> <span class="fu">reorder</span>(food_items, emissions), <span class="at">fill =</span> category)) <span class="sc">+</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Food: greenhouse gas emissions across the supply chain"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Greenhouse gas emissions are measured in kilograms of carbon dioxide-equivalents (CO2eq) per kilogram of food."</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="cn">NULL</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>       )<span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkseagreen"</span>, <span class="st">"burlywood"</span>, <span class="st">"orange"</span>, <span class="st">"cornflowerblue"</span>, <span class="st">"indianred"</span>, <span class="st">"yellow"</span>, <span class="st">"lightslategray"</span>, <span class="st">"lavender"</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">limits =</span> <span class="fu">rev</span>(<span class="fu">levels</span>(dat3<span class="sc">$</span>category))) <span class="sc">+</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">20</span>),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">11</span>),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>))<span class="sc">+</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> dat4, </span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> food_items, </span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                <span class="at">label =</span> <span class="fu">paste</span>(<span class="fu">round</span>(emissions, <span class="dv">1</span>), <span class="st">"kg"</span>)), </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.05</span>,</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -395,118 +396,182 @@ Attaching package: 'dplyr'</code></pre>
 <section id="creating-a-table" class="level1">
 <h1>Creating a table</h1>
 <p>I’ll be using the same data that created the figure above to create a table. To make it more interesting, I’m going to use the full dataset to subset by food source/group.</p>
-<p>Formatted text which can be bold, italic, etc. - certainly in the title etc.</p>
-<p>Colored text or highlighted cells - highlight the cell with the greatest emmission group maybe?</p>
-<p>Additional text outside of the regular table structure like spanning column headers or correctly attributed footnotes - footnote on greenhouse gas emissions?</p>
-<p>A descriptive caption explaining the useful information summary that your table represents.</p>
-<p>Additionally, your table must contain at least one of the following advanced features:</p>
-<p>A column with some type of image for the values, which could potentially be a data visualization (e.g.&nbsp;sparklines). Automatically calculated summary statistics (summary statistics that you calculate manually do not count towards this objective) Automatically applied (not manual) conditional formatting (potentially overlapping with formatted or colored text/cells) Interactive features</p>
 <section id="setup-1" class="level2">
 <h2 class="anchored" data-anchor-id="setup-1">Setup</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: package 'gt' was built under R version 4.4.2</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: package 'gtsummary' was built under R version 4.4.2</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-</section>
-<section id="data-processing-1" class="level1">
-<h1>Data processing</h1>
+<section id="data-processing-1" class="level2">
+<h2 class="anchored" data-anchor-id="data-processing-1">Data processing</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># put food items into categories</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>dat5 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_group =</span> <span class="fu">case_when</span>(</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beef (beef herd)"</span>, <span class="st">"Beef (dairy herd)"</span>,<span class="st">"Lamb &amp; Mutton"</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>) <span class="sc">~</span> <span class="st">"Land Animals"</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Fish (farmed)"</span>, <span class="st">"Shrimps (farmed)"</span>) <span class="sc">~</span> <span class="st">"Water Animals"</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Cheese"</span>, <span class="st">"Eggs"</span>, <span class="st">"Milk"</span>) <span class="sc">~</span> <span class="st">"Animal By-products"</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Apples"</span>, <span class="st">"Bananas"</span>, <span class="st">"Berries &amp; Grapes"</span>, <span class="st">"Citrus Fruit"</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Fruit"</span>, <span class="st">"Tomatoes"</span>) <span class="sc">~</span> <span class="st">"Fruits"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Root Vegetables"</span>, <span class="st">"Onions &amp; Leeks"</span>, <span class="st">"Brassicas"</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Vegetables"</span>, <span class="st">"Potatoes"</span>, </span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Cassava"</span>) <span class="sc">~</span> <span class="st">"Vegetables"</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Maize"</span>, <span class="st">"Barley"</span>, <span class="st">"Rice"</span>, <span class="st">"Wheat &amp; Rye"</span>, <span class="st">"Oatmeal"</span>,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Pulses"</span>, <span class="st">"Peas"</span>) <span class="sc">~</span> <span class="st">"Legumes &amp; Grains"</span>,</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beet Sugar"</span>, <span class="st">"Cane Sugar"</span>) <span class="sc">~</span> <span class="st">"Sugars"</span>,</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Groundnuts"</span>, <span class="st">"Nuts"</span>) <span class="sc">~</span> <span class="st">"Nuts &amp; Seeds"</span>,</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Olive Oil"</span>, <span class="st">"Rapeseed Oil"</span>, <span class="st">"Soybean Oil"</span>, </span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Sunflower Oil"</span>, <span class="st">"Palm Oil"</span>) <span class="sc">~</span> <span class="st">"Oils"</span>,</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Soy milk"</span>, <span class="st">"Tofu"</span>) <span class="sc">~</span> <span class="st">"Plant-based Alternatives"</span>,</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coffee"</span>, <span class="st">"Wine"</span>, <span class="st">"Dark Chocolate"</span>) <span class="sc">~</span> <span class="st">"Misc"</span>,</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Other"</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># put food items into categories</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>dat5 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beef (beef herd)"</span>, <span class="st">"Beef (dairy herd)"</span>,<span class="st">"Lamb &amp; Mutton"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>) <span class="sc">~</span> <span class="st">"Land Animals"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Fish (farmed)"</span>, <span class="st">"Shrimps (farmed)"</span>) <span class="sc">~</span> <span class="st">"Water Animals"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Cheese"</span>, <span class="st">"Eggs"</span>, <span class="st">"Milk"</span>) <span class="sc">~</span> <span class="st">"Animal By-products"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Apples"</span>, <span class="st">"Bananas"</span>, <span class="st">"Berries &amp; Grapes"</span>, <span class="st">"Citrus Fruit"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Fruit"</span>, <span class="st">"Tomatoes"</span>) <span class="sc">~</span> <span class="st">"Fruits"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Root Vegetables"</span>, <span class="st">"Onions &amp; Leeks"</span>, <span class="st">"Brassicas"</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Vegetables"</span>, <span class="st">"Potatoes"</span>, </span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Cassava"</span>) <span class="sc">~</span> <span class="st">"Vegetables"</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Maize"</span>, <span class="st">"Barley"</span>, <span class="st">"Rice"</span>, <span class="st">"Wheat &amp; Rye"</span>, <span class="st">"Oatmeal"</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Pulses"</span>, <span class="st">"Peas"</span>) <span class="sc">~</span> <span class="st">"Legumes &amp; Grains"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beet Sugar"</span>, <span class="st">"Cane Sugar"</span>) <span class="sc">~</span> <span class="st">"Sugars"</span>,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Groundnuts"</span>, <span class="st">"Nuts"</span>) <span class="sc">~</span> <span class="st">"Nuts &amp; Seeds"</span>,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Olive Oil"</span>, <span class="st">"Rapeseed Oil"</span>, <span class="st">"Soybean Oil"</span>, </span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Sunflower Oil"</span>, <span class="st">"Palm Oil"</span>) <span class="sc">~</span> <span class="st">"Oils"</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Soy milk"</span>, <span class="st">"Tofu"</span>) <span class="sc">~</span> <span class="st">"Plant-based Alternatives"</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coffee"</span>, <span class="st">"Wine"</span>, <span class="st">"Dark Chocolate"</span>) <span class="sc">~</span> <span class="st">"Misc"</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Other"</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summary stats by hand</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>format_ci <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">d =</span> <span class="dv">2</span>) {</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    fmt_str <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"%."</span>, d, <span class="st">"f"</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>y), <span class="st">" ("</span>,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymin), <span class="st">", "</span>,</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymax), <span class="st">")"</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(out)</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> dat5 <span class="sc">%&gt;%</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(food_group) <span class="sc">%&gt;%</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(land_use) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">farm =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(farm) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">animal =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(animal_feed) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">procesing =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(processing) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">transport =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(transport) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">retail =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(retail) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">pack =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(packaging) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">losses =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(losses) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>(<span class="at">rowname_col =</span> <span class="st">"food_group"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> <span class="st">"Land use change"</span>,</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">farm =</span> <span class="st">"Farm"</span>,</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">animal =</span> <span class="st">"Animal feed"</span>,</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">procesing =</span> <span class="st">"Processing"</span>,</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">transport =</span> <span class="st">"Transport"</span>,</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">retail =</span> <span class="st">"Retail"</span>,</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">pack =</span> <span class="st">"Packaging"</span>,</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">losses =</span> <span class="st">"Losses"</span></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summary stats</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>format_ci <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">d =</span> <span class="dv">1</span>) {</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    fmt_str <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"%."</span>, d, <span class="st">"f"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>y), <span class="st">" ("</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymin), <span class="st">", "</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymax), <span class="st">")"</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(out)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co"># dataframe including summary statistics for table</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>dat6 <span class="ot">&lt;-</span> dat5 <span class="sc">%&gt;%</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(food_group) <span class="sc">%&gt;%</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(land_use, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">farm =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(farm, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(animal_feed, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">processing =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(processing, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">transport =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(transport, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">retail =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(retail, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">pack =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(packaging, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">losses =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(losses, <span class="at">B=</span><span class="dv">1000</span>) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">symbol =</span> <span class="fu">c</span>(</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"cheese"</span>, <span class="st">"apple-whole"</span>, <span class="st">"burger"</span>, <span class="st">"wheat-awn"</span>, <span class="st">"wine-glass"</span>, <span class="st">"seedling"</span>,</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"bottle-droplet"</span>, <span class="st">"leaf"</span>, <span class="st">"cubes-stacked"</span>, <span class="st">"carrot"</span>, <span class="st">"fish"</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>    food_group, symbol, n, land, farm, animal, processing, </span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    transport, retail, pack, losses</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="create-table" class="level2">
+<h2 class="anchored" data-anchor-id="create-table">Create table</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> dat6 <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>(<span class="at">rowname_col =</span> <span class="st">"food_group"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># label columns</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">symbol =</span> <span class="st">""</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> <span class="st">"Land use change"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">farm =</span> <span class="st">"Farm"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">animal =</span> <span class="st">"Animal feed"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">processing =</span> <span class="st">"Processing"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">transport =</span> <span class="st">"Transport"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">retail =</span> <span class="st">"Retail"</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">pack =</span> <span class="st">"Packaging"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">losses =</span> <span class="st">"Losses"</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># center cell contents</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_align</span>(<span class="at">align =</span> <span class="st">"center"</span>, <span class="at">columns =</span> <span class="sc">-</span>food_group) <span class="sc">%&gt;%</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># aesthetic specifics ========================================================</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">md</span>(<span class="fu">paste</span>(<span class="st">"Average Emissions"</span>, </span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>                     fontawesome<span class="sc">::</span><span class="fu">fa</span>(<span class="st">"fire"</span>), <span class="st">"by Food Group"</span>))</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    )<span class="sc">%&gt;%</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_footnote</span>(</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">footnote =</span> <span class="st">"Mean (95% bootstrap CI; 1000 resamples)"</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">locations =</span> <span class="fu">cells_column_labels</span>(<span class="at">columns =</span> <span class="fu">c</span>(land, farm, animal, processing,</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                                                transport, retail, pack, losses))</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># stub and label text</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tab_style</span>(</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="fu">cell_text</span>(</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">size =</span> <span class="st">"smaller"</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">weight =</span> <span class="st">"bold"</span>,</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">transform =</span> <span class="st">"uppercase"</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">locations =</span> <span class="fu">list</span>(<span class="fu">cells_column_labels</span>(), <span class="fu">cells_stub</span>())</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cell text</span></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_style</span>(</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="fu">cell_text</span>(</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">size =</span> <span class="st">"smaller"</span>),</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">locations =</span> <span class="fu">cells_body</span>()</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>  <span class="co"># title and cell fill</span></span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tab_style</span>(</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="fu">cell_fill</span>(<span class="at">color =</span> <span class="st">"gray98"</span>),</span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">locations =</span> <span class="fu">list</span>(<span class="fu">cells_title</span>(), <span class="fu">cells_body</span>(<span class="at">columns =</span> <span class="sc">-</span>symbol))</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># symbol specific fill</span></span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_style</span>(</span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">style =</span> <span class="fu">cell_fill</span>(<span class="at">color =</span> <span class="st">"darksalmon"</span> <span class="sc">%&gt;%</span> <span class="fu">adjust_luminance</span>(<span class="at">steps =</span> <span class="dv">1</span>)),</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">locations =</span> <span class="fu">cells_body</span>(<span class="at">columns =</span> symbol)</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>  <span class="co"># insert symbols</span></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>   <span class="fu">fmt_icon</span>(<span class="at">columns =</span> symbol) <span class="sc">%&gt;%</span></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>  <span class="co"># caption</span></span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tab_caption</span>(<span class="at">caption =</span> <span class="fu">md</span>(<span class="st">"Average greenhouse gas emissions (CO2kg) per kilogram of food product, categorized by food group. Mean emission values are included, along with the corresponding 95% bootstrap confidence intervals, for each of the key stages in the food production and supply chain: land use change, farming, animal feed, processing, transport, retail, packaging, and losses."</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>  <span class="co"># size adjustments</span></span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>   <span class="fu">cols_width</span>(</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>     symbol <span class="sc">~</span> <span class="fu">px</span>(<span class="dv">25</span>),</span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>     n <span class="sc">~</span> <span class="fu">px</span>(<span class="dv">25</span>)</span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_options</span>(<span class="at">table.font.size =</span> <span class="dv">14</span>)</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a><span class="co"># print table</span></span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div id="ouoxaiyxdn" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ouoxaiyxdn table {
+<div id="bryfnnzczb" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#bryfnnzczb table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#ouoxaiyxdn thead, #ouoxaiyxdn tbody, #ouoxaiyxdn tfoot, #ouoxaiyxdn tr, #ouoxaiyxdn td, #ouoxaiyxdn th {
+#bryfnnzczb thead, #bryfnnzczb tbody, #bryfnnzczb tfoot, #bryfnnzczb tr, #bryfnnzczb td, #bryfnnzczb th {
   border-style: none;
 }
 
-#ouoxaiyxdn p {
+#bryfnnzczb p {
   margin: 0;
   padding: 0;
 }
 
-#ouoxaiyxdn .gt_table {
+#bryfnnzczb .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
   margin-left: auto;
   margin-right: auto;
   color: #333333;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: normal;
   font-style: normal;
   background-color: #FFFFFF;
@@ -525,12 +590,12 @@ Attaching package: 'dplyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_caption {
+#bryfnnzczb .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#ouoxaiyxdn .gt_title {
+#bryfnnzczb .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -542,7 +607,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#ouoxaiyxdn .gt_subtitle {
+#bryfnnzczb .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -554,7 +619,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-width: 0;
 }
 
-#ouoxaiyxdn .gt_heading {
+#bryfnnzczb .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -566,13 +631,13 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_bottom_border {
+#bryfnnzczb .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_col_headings {
+#bryfnnzczb .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -587,7 +652,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_col_heading {
+#bryfnnzczb .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -607,7 +672,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#ouoxaiyxdn .gt_column_spanner_outer {
+#bryfnnzczb .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -619,15 +684,15 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 4px;
 }
 
-#ouoxaiyxdn .gt_column_spanner_outer:first-child {
+#bryfnnzczb .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ouoxaiyxdn .gt_column_spanner_outer:last-child {
+#bryfnnzczb .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ouoxaiyxdn .gt_column_spanner {
+#bryfnnzczb .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -639,11 +704,11 @@ Attaching package: 'dplyr'</code></pre>
   width: 100%;
 }
 
-#ouoxaiyxdn .gt_spanner_row {
+#bryfnnzczb .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#ouoxaiyxdn .gt_group_heading {
+#bryfnnzczb .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -669,7 +734,7 @@ Attaching package: 'dplyr'</code></pre>
   text-align: left;
 }
 
-#ouoxaiyxdn .gt_empty_group_heading {
+#bryfnnzczb .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -684,15 +749,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: middle;
 }
 
-#ouoxaiyxdn .gt_from_md > :first-child {
+#bryfnnzczb .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ouoxaiyxdn .gt_from_md > :last-child {
+#bryfnnzczb .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ouoxaiyxdn .gt_row {
+#bryfnnzczb .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -711,7 +776,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#ouoxaiyxdn .gt_stub {
+#bryfnnzczb .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -724,7 +789,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ouoxaiyxdn .gt_stub_row_group {
+#bryfnnzczb .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -738,15 +803,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: top;
 }
 
-#ouoxaiyxdn .gt_row_group_first td {
+#bryfnnzczb .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#ouoxaiyxdn .gt_row_group_first th {
+#bryfnnzczb .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#ouoxaiyxdn .gt_summary_row {
+#bryfnnzczb .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -756,16 +821,16 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ouoxaiyxdn .gt_first_summary_row {
+#bryfnnzczb .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_first_summary_row.thick {
+#bryfnnzczb .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#ouoxaiyxdn .gt_last_summary_row {
+#bryfnnzczb .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -775,7 +840,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_grand_summary_row {
+#bryfnnzczb .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -785,7 +850,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ouoxaiyxdn .gt_first_grand_summary_row {
+#bryfnnzczb .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -795,7 +860,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_last_grand_summary_row_top {
+#bryfnnzczb .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -805,11 +870,11 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_striped {
+#bryfnnzczb .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ouoxaiyxdn .gt_table_body {
+#bryfnnzczb .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -818,7 +883,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_footnotes {
+#bryfnnzczb .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -832,7 +897,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_footnote {
+#bryfnnzczb .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -841,7 +906,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ouoxaiyxdn .gt_sourcenotes {
+#bryfnnzczb .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -855,7 +920,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ouoxaiyxdn .gt_sourcenote {
+#bryfnnzczb .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -863,213 +928,329 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ouoxaiyxdn .gt_left {
+#bryfnnzczb .gt_left {
   text-align: left;
 }
 
-#ouoxaiyxdn .gt_center {
+#bryfnnzczb .gt_center {
   text-align: center;
 }
 
-#ouoxaiyxdn .gt_right {
+#bryfnnzczb .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ouoxaiyxdn .gt_font_normal {
+#bryfnnzczb .gt_font_normal {
   font-weight: normal;
 }
 
-#ouoxaiyxdn .gt_font_bold {
+#bryfnnzczb .gt_font_bold {
   font-weight: bold;
 }
 
-#ouoxaiyxdn .gt_font_italic {
+#bryfnnzczb .gt_font_italic {
   font-style: italic;
 }
 
-#ouoxaiyxdn .gt_super {
+#bryfnnzczb .gt_super {
   font-size: 65%;
 }
 
-#ouoxaiyxdn .gt_footnote_marks {
+#bryfnnzczb .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#ouoxaiyxdn .gt_asterisk {
+#bryfnnzczb .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#ouoxaiyxdn .gt_indent_1 {
+#bryfnnzczb .gt_indent_1 {
   text-indent: 5px;
 }
 
-#ouoxaiyxdn .gt_indent_2 {
+#bryfnnzczb .gt_indent_2 {
   text-indent: 10px;
 }
 
-#ouoxaiyxdn .gt_indent_3 {
+#bryfnnzczb .gt_indent_3 {
   text-indent: 15px;
 }
 
-#ouoxaiyxdn .gt_indent_4 {
+#bryfnnzczb .gt_indent_4 {
   text-indent: 20px;
 }
 
-#ouoxaiyxdn .gt_indent_5 {
+#bryfnnzczb .gt_indent_5 {
   text-indent: 25px;
 }
 
-#ouoxaiyxdn .katex-display {
+#bryfnnzczb .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#ouoxaiyxdn div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#bryfnnzczb div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
 
 <table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<caption>Average greenhouse gas emissions (CO2kg) per kilogram of food product, categorized by food group. Mean emission values are included, along with the corresponding 95% bootstrap confidence intervals, for each of the key stages in the food production and supply chain: land use change, farming, animal feed, processing, transport, retail, packaging, and losses.</caption>
 <thead>
-<tr class="header gt_col_headings">
+<tr class="header gt_heading">
+<th colspan="11" class="gt_heading gt_title gt_font_normal gt_bottom_border" style="background-color: #FAFAFA"><span data-qmd-base64="QXZlcmFnZSBFbWlzc2lvbnMgPHN2ZyBhcmlhLWhpZGRlbj0idHJ1ZSIgcm9sZT0iaW1nIiB2aWV3Qm94PSIwIDAgNDQ4IDUxMiIgc3R5bGU9ImhlaWdodDoxZW07d2lkdGg6MC44OGVtO3ZlcnRpY2FsLWFsaWduOi0wLjEyNWVtO21hcmdpbi1sZWZ0OmF1dG87bWFyZ2luLXJpZ2h0OmF1dG87Zm9udC1zaXplOmluaGVyaXQ7ZmlsbDpjdXJyZW50Q29sb3I7b3ZlcmZsb3c6dmlzaWJsZTtwb3NpdGlvbjpyZWxhdGl2ZTsiPjxwYXRoIGQ9Ik0xNTkuMyA1LjRjNy44LTcuMyAxOS45LTcuMiAyNy43IC4xYzI3LjYgMjUuOSA1My41IDUzLjggNzcuNyA4NGMxMS0xNC40IDIzLjUtMzAuMSAzNy00Mi45YzcuOS03LjQgMjAuMS03LjQgMjggLjFjMzQuNiAzMyA2My45IDc2LjYgODQuNSAxMThjMjAuMyA0MC44IDMzLjggODIuNSAzMy44IDExMS45QzQ0OCA0MDQuMiAzNDguMiA1MTIgMjI0IDUxMkM5OC40IDUxMiAwIDQwNC4xIDAgMjc2LjVjMC0zOC40IDE3LjgtODUuMyA0NS40LTEzMS43QzczLjMgOTcuNyAxMTIuNyA0OC42IDE1OS4zIDUuNHpNMjI1LjcgNDE2YzI1LjMgMCA0Ny43LTcgNjguOC0yMWM0Mi4xLTI5LjQgNTMuNC04OC4yIDI4LjEtMTM0LjRjLTQuNS05LTE2LTkuNi0yMi41LTJsLTI1LjIgMjkuM2MtNi42IDcuNi0xOC41IDcuNC0yNC43LS41Yy0xNi41LTIxLTQ2LTU4LjUtNjIuOC03OS44Yy02LjMtOC0xOC4zLTguMS0yNC43LS4xYy0zMy44IDQyLjUtNTAuOCA2OS4zLTUwLjggOTkuNEMxMTIgMzc1LjQgMTYyLjYgNDE2IDIyNS43IDQxNnoiLz48L3N2Zz4gYnkgRm9vZCBHcm91cA==">
+<span class="gt_from_md">
+Average Emissions
+<svg aria-hidden="true" role="img" viewbox="0 0 448 512" style="height:1em;width:0.88em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<path d="M159.3 5.4c7.8-7.3 19.9-7.2 27.7 .1c27.6 25.9 53.5 53.8 77.7 84c11-14.4 23.5-30.1 37-42.9c7.9-7.4 20.1-7.4 28 .1c34.6 33 63.9 76.6 84.5 118c20.3 40.8 33.8 82.5 33.8 111.9C448 404.2 348.2 512 224 512C98.4 512 0 404.1 0 276.5c0-38.4 17.8-85.3 45.4-131.7C73.3 97.7 112.7 48.6 159.3 5.4zM225.7 416c25.3 0 47.7-7 68.8-21c42.1-29.4 53.4-88.2 28.1-134.4c-4.5-9-16-9.6-22.5-2l-25.2 29.3c-6.6 7.6-18.5 7.4-24.7-.5c-16.5-21-46-58.5-62.8-79.8c-6.3-8-18.3-8.1-24.7-.1c-33.8 42.5-50.8 69.3-50.8 99.4C112 375.4 162.6 416 225.7 416z"></path>
+</svg>
+by Food Group</span></span></th>
+</tr>
+<tr class="odd gt_col_headings">
 <th id="a::stub" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
-<th id="land" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Land use change</th>
-<th id="farm" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Farm</th>
-<th id="animal" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Animal feed</th>
-<th id="procesing" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Processing</th>
-<th id="transport" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Transport</th>
-<th id="retail" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Retail</th>
-<th id="pack" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Packaging</th>
-<th id="losses" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Losses</th>
+<th id="symbol" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col"></th>
+<th id="n" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">n</th>
+<th id="land" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Land use change<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="farm" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Farm<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="animal" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Animal feed<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="processing" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Processing<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="transport" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Transport<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="retail" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Retail<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="pack" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Packaging<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="losses" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" style="font-size: smaller; font-weight: bold; text-transform: uppercase" scope="col">Losses<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
 </tr>
 </thead>
 <tbody class="gt_table_body">
 <tr class="odd">
-<td id="stub_1_1" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Animal By-products</td>
-<td class="gt_row gt_right" headers="stub_1_1 land">1.90 (0.51, 4.47)</td>
-<td class="gt_row gt_right" headers="stub_1_1 farm">5.31 (1.32, 13.10)</td>
-<td class="gt_row gt_right" headers="stub_1_1 animal">1.60 (0.24, 2.35)</td>
-<td class="gt_row gt_right" headers="stub_1_1 procesing">0.30 (0.00, 0.74)</td>
-<td class="gt_row gt_right" headers="stub_1_1 transport">0.11 (0.08, 0.14)</td>
-<td class="gt_row gt_right" headers="stub_1_1 retail">0.21 (0.04, 0.33)</td>
-<td class="gt_row gt_right" headers="stub_1_1 pack">0.14 (0.10, 0.17)</td>
-<td class="gt_row gt_right" headers="stub_1_1 losses">1.00 (0.15, 2.58)</td>
+<td id="stub_1_1" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Animal By-products</td>
+<td class="gt_row gt_center" headers="stub_1_1 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Cheese" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Cheese
+</title>
+<path d="M512 240.2V256H0c0-20 10-38.7 26.6-49.8L274.9 40.7c8.6-5.7 18.6-8.7 28.9-8.7C418.8 32 512 125.2 512 240.2zm0 47.8V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V288H512z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_1 n" style="font-size: smaller; background-color: #FAFAFA">3</td>
+<td class="gt_row gt_center" headers="stub_1_1 land" style="font-size: smaller; background-color: #FAFAFA">1.9 (0.5, 4.5)</td>
+<td class="gt_row gt_center" headers="stub_1_1 farm" style="font-size: smaller; background-color: #FAFAFA">5.3 (1.3, 13.1)</td>
+<td class="gt_row gt_center" headers="stub_1_1 animal" style="font-size: smaller; background-color: #FAFAFA">1.6 (0.2, 2.4)</td>
+<td class="gt_row gt_center" headers="stub_1_1 processing" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.0, 0.7)</td>
+<td class="gt_row gt_center" headers="stub_1_1 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_1 retail" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.0, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_1 pack" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_1 losses" style="font-size: smaller; background-color: #FAFAFA">1.0 (0.2, 2.6)</td>
 </tr>
 <tr class="even">
-<td id="stub_1_2" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Fruits</td>
-<td class="gt_row gt_right" headers="stub_1_2 land">0.05 (-0.06, 0.20)</td>
-<td class="gt_row gt_right" headers="stub_1_2 farm">0.43 (0.28, 0.59)</td>
-<td class="gt_row gt_right" headers="stub_1_2 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_2 procesing">0.02 (0.00, 0.03)</td>
-<td class="gt_row gt_right" headers="stub_1_2 transport">0.18 (0.12, 0.24)</td>
-<td class="gt_row gt_right" headers="stub_1_2 retail">0.02 (0.02, 0.02)</td>
-<td class="gt_row gt_right" headers="stub_1_2 pack">0.09 (0.05, 0.14)</td>
-<td class="gt_row gt_right" headers="stub_1_2 losses">0.27 (0.12, 0.42)</td>
+<td id="stub_1_2" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Fruits</td>
+<td class="gt_row gt_center" headers="stub_1_2 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Apple Whole" role="img" viewbox="0 0 448 512" style="height:1em;width:0.88em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Apple Whole
+</title>
+<path d="M224 112c-8.8 0-16-7.2-16-16V80c0-44.2 35.8-80 80-80h16c8.8 0 16 7.2 16 16V32c0 44.2-35.8 80-80 80H224zM0 288c0-76.3 35.7-160 112-160c27.3 0 59.7 10.3 82.7 19.3c18.8 7.3 39.9 7.3 58.7 0c22.9-8.9 55.4-19.3 82.7-19.3c76.3 0 112 83.7 112 160c0 128-80 224-160 224c-16.5 0-38.1-6.6-51.5-11.3c-8.1-2.8-16.9-2.8-25 0c-13.4 4.7-35 11.3-51.5 11.3C80 512 0 416 0 288z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_2 n" style="font-size: smaller; background-color: #FAFAFA">6</td>
+<td class="gt_row gt_center" headers="stub_1_2 land" style="font-size: smaller; background-color: #FAFAFA">0.1 (-0.1, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_2 farm" style="font-size: smaller; background-color: #FAFAFA">0.4 (0.3, 0.6)</td>
+<td class="gt_row gt_center" headers="stub_1_2 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_2 processing" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_2 transport" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_2 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_2 pack" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.0, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_2 losses" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.1, 0.4)</td>
 </tr>
 <tr class="odd">
-<td id="stub_1_3" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Land Animals</td>
-<td class="gt_row gt_right" headers="stub_1_3 land">6.18 (1.14, 14.77)</td>
-<td class="gt_row gt_right" headers="stub_1_3 farm">21.71 (6.05, 39.33)</td>
-<td class="gt_row gt_right" headers="stub_1_3 animal">3.24 (2.71, 3.82)</td>
-<td class="gt_row gt_right" headers="stub_1_3 procesing">1.18 (0.68, 1.65)</td>
-<td class="gt_row gt_right" headers="stub_1_3 transport">0.53 (0.45, 0.62)</td>
-<td class="gt_row gt_right" headers="stub_1_3 retail">0.26 (0.24, 0.28)</td>
-<td class="gt_row gt_right" headers="stub_1_3 pack">0.36 (0.32, 0.40)</td>
-<td class="gt_row gt_right" headers="stub_1_3 losses">5.46 (2.01, 10.18)</td>
+<td id="stub_1_3" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Land Animals</td>
+<td class="gt_row gt_center" headers="stub_1_3 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Burger" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Burger
+</title>
+<path d="M61.1 224C45 224 32 211 32 194.9c0-1.9 .2-3.7 .6-5.6C37.9 168.3 78.8 32 256 32s218.1 136.3 223.4 157.3c.5 1.9 .6 3.7 .6 5.6c0 16.1-13 29.1-29.1 29.1H61.1zM144 128a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm240 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32zM272 96a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zM16 304c0-26.5 21.5-48 48-48H448c26.5 0 48 21.5 48 48s-21.5 48-48 48H64c-26.5 0-48-21.5-48-48zm16 96c0-8.8 7.2-16 16-16H464c8.8 0 16 7.2 16 16v16c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V400z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_3 n" style="font-size: smaller; background-color: #FAFAFA">5</td>
+<td class="gt_row gt_center" headers="stub_1_3 land" style="font-size: smaller; background-color: #FAFAFA">6.2 (1.2, 14.9)</td>
+<td class="gt_row gt_center" headers="stub_1_3 farm" style="font-size: smaller; background-color: #FAFAFA">21.7 (6.1, 39.6)</td>
+<td class="gt_row gt_center" headers="stub_1_3 animal" style="font-size: smaller; background-color: #FAFAFA">3.2 (2.7, 3.8)</td>
+<td class="gt_row gt_center" headers="stub_1_3 processing" style="font-size: smaller; background-color: #FAFAFA">1.2 (0.7, 1.7)</td>
+<td class="gt_row gt_center" headers="stub_1_3 transport" style="font-size: smaller; background-color: #FAFAFA">0.5 (0.4, 0.6)</td>
+<td class="gt_row gt_center" headers="stub_1_3 retail" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.2, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_3 pack" style="font-size: smaller; background-color: #FAFAFA">0.4 (0.3, 0.4)</td>
+<td class="gt_row gt_center" headers="stub_1_3 losses" style="font-size: smaller; background-color: #FAFAFA">5.5 (2.1, 10.1)</td>
 </tr>
 <tr class="even">
-<td id="stub_1_4" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Legumes &amp; Grains</td>
-<td class="gt_row gt_right" headers="stub_1_4 land">0.08 (0.00, 0.22)</td>
-<td class="gt_row gt_right" headers="stub_1_4 farm">1.28 (0.63, 2.08)</td>
-<td class="gt_row gt_right" headers="stub_1_4 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_4 procesing">0.08 (0.03, 0.13)</td>
-<td class="gt_row gt_right" headers="stub_1_4 transport">0.09 (0.07, 0.11)</td>
-<td class="gt_row gt_right" headers="stub_1_4 retail">0.08 (0.04, 0.14)</td>
-<td class="gt_row gt_right" headers="stub_1_4 pack">0.18 (0.08, 0.32)</td>
-<td class="gt_row gt_right" headers="stub_1_4 losses">0.24 (0.12, 0.37)</td>
+<td id="stub_1_4" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Legumes &amp; Grains</td>
+<td class="gt_row gt_center" headers="stub_1_4 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Wheat Awn" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Wheat Awn
+</title>
+<path d="M505 41c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L383 95c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l88-88zM305.5 27.3c-6.2-6.2-16.4-6.2-22.6 0L271.5 38.6c-37.5 37.5-37.5 98.3 0 135.8l10.4 10.4-30.5 30.5c-3.4-27.3-15.5-53.8-36.5-74.8l-11.3-11.3c-6.2-6.2-16.4-6.2-22.6 0l-11.3 11.3c-37.5 37.5-37.5 98.3 0 135.8l10.4 10.4-30.5 30.5c-3.4-27.3-15.5-53.8-36.5-74.8L101.8 231c-6.2-6.2-16.4-6.2-22.6 0L67.9 242.3c-37.5 37.5-37.5 98.3 0 135.8l10.4 10.4L9.4 457.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l68.9-68.9 12.2 12.2c37.5 37.5 98.3 37.5 135.8 0l11.3-11.3c6.2-6.2 6.2-16.4 0-22.6l-11.3-11.3c-21.8-21.8-49.6-34.1-78.1-36.9l31.9-31.9 12.2 12.2c37.5 37.5 98.3 37.5 135.8 0l11.3-11.3c6.2-6.2 6.2-16.4 0-22.6l-11.3-11.3c-21.8-21.8-49.6-34.1-78.1-36.9l31.9-31.9 12.2 12.2c37.5 37.5 98.3 37.5 135.8 0L486.5 231c6.2-6.2 6.2-16.4 0-22.6L475.2 197c-5.2-5.2-10.6-9.8-16.4-13.9L505 137c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-59.4 59.4c-20.6-4.4-42-3.7-62.3 2.1c6.1-21.3 6.6-43.8 1.4-65.3L409 41c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L329.1 52.9c-3.7-5-7.8-9.8-12.4-14.3L305.5 27.3z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_4 n" style="font-size: smaller; background-color: #FAFAFA">7</td>
+<td class="gt_row gt_center" headers="stub_1_4 land" style="font-size: smaller; background-color: #FAFAFA">0.1 (-0.0, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_4 farm" style="font-size: smaller; background-color: #FAFAFA">1.3 (0.6, 2.2)</td>
+<td class="gt_row gt_center" headers="stub_1_4 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_4 processing" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.0, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_4 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_4 retail" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.0, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_4 pack" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_4 losses" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.4)</td>
 </tr>
 <tr class="odd">
-<td id="stub_1_5" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Misc</td>
-<td class="gt_row gt_right" headers="stub_1_5 land">9.86 (-0.06, 25.81)</td>
-<td class="gt_row gt_right" headers="stub_1_5 farm">6.02 (0.63, 10.75)</td>
-<td class="gt_row gt_right" headers="stub_1_5 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_5 procesing">0.36 (0.14, 0.61)</td>
-<td class="gt_row gt_right" headers="stub_1_5 transport">0.11 (0.09, 0.13)</td>
-<td class="gt_row gt_right" headers="stub_1_5 retail">0.04 (0.04, 0.05)</td>
-<td class="gt_row gt_right" headers="stub_1_5 pack">1.05 (0.72, 1.69)</td>
-<td class="gt_row gt_right" headers="stub_1_5 losses">8.20 (0.20, 12.94)</td>
+<td id="stub_1_5" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Misc</td>
+<td class="gt_row gt_center" headers="stub_1_5 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Wine Glass" role="img" viewbox="0 0 320 512" style="height:1em;width:0.62em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Wine Glass
+</title>
+<path d="M32.1 29.3C33.5 12.8 47.4 0 64 0H256c16.6 0 30.5 12.8 31.9 29.3l14 168.4c6 72-42.5 135.2-109.9 150.6V448h48c17.7 0 32 14.3 32 32s-14.3 32-32 32H160 80c-17.7 0-32-14.3-32-32s14.3-32 32-32h48V348.4C60.6 333 12.1 269.8 18.1 197.8l14-168.4zm56 98.7H231.9l-5.3-64H93.4l-5.3 64z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_5 n" style="font-size: smaller; background-color: #FAFAFA">3</td>
+<td class="gt_row gt_center" headers="stub_1_5 land" style="font-size: smaller; background-color: #FAFAFA">9.9 (-0.1, 25.8)</td>
+<td class="gt_row gt_center" headers="stub_1_5 farm" style="font-size: smaller; background-color: #FAFAFA">6.0 (0.6, 10.8)</td>
+<td class="gt_row gt_center" headers="stub_1_5 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_5 processing" style="font-size: smaller; background-color: #FAFAFA">0.4 (0.1, 0.6)</td>
+<td class="gt_row gt_center" headers="stub_1_5 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_5 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_5 pack" style="font-size: smaller; background-color: #FAFAFA">1.1 (0.7, 1.7)</td>
+<td class="gt_row gt_center" headers="stub_1_5 losses" style="font-size: smaller; background-color: #FAFAFA">8.2 (0.2, 12.9)</td>
 </tr>
 <tr class="even">
-<td id="stub_1_6" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Nuts &amp; Seeds</td>
-<td class="gt_row gt_right" headers="stub_1_6 land">-1.39 (-3.26, 0.49)</td>
-<td class="gt_row gt_right" headers="stub_1_6 farm">2.48 (1.58, 3.37)</td>
-<td class="gt_row gt_right" headers="stub_1_6 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_6 procesing">0.23 (0.05, 0.41)</td>
-<td class="gt_row gt_right" headers="stub_1_6 transport">0.12 (0.11, 0.13)</td>
-<td class="gt_row gt_right" headers="stub_1_6 retail">0.04 (0.04, 0.05)</td>
-<td class="gt_row gt_right" headers="stub_1_6 pack">0.12 (0.11, 0.12)</td>
-<td class="gt_row gt_right" headers="stub_1_6 losses">0.23 (-0.01, 0.47)</td>
+<td id="stub_1_6" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Nuts &amp; Seeds</td>
+<td class="gt_row gt_center" headers="stub_1_6 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Seedling" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Seedling
+</title>
+<path d="M512 32c0 113.6-84.6 207.5-194.2 222c-7.1-53.4-30.6-101.6-65.3-139.3C290.8 46.3 364 0 448 0h32c17.7 0 32 14.3 32 32zM0 96C0 78.3 14.3 64 32 64H64c123.7 0 224 100.3 224 224v32V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V320C100.3 320 0 219.7 0 96z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_6 n" style="font-size: smaller; background-color: #FAFAFA">2</td>
+<td class="gt_row gt_center" headers="stub_1_6 land" style="font-size: smaller; background-color: #FAFAFA">-1.4 (-3.3, 0.5)</td>
+<td class="gt_row gt_center" headers="stub_1_6 farm" style="font-size: smaller; background-color: #FAFAFA">2.5 (1.6, 3.4)</td>
+<td class="gt_row gt_center" headers="stub_1_6 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_6 processing" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.4)</td>
+<td class="gt_row gt_center" headers="stub_1_6 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_6 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_6 pack" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_6 losses" style="font-size: smaller; background-color: #FAFAFA">0.2 (-0.0, 0.5)</td>
 </tr>
 <tr class="odd">
-<td id="stub_1_7" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Oils</td>
-<td class="gt_row gt_right" headers="stub_1_7 land">1.12 (-0.04, 2.30)</td>
-<td class="gt_row gt_right" headers="stub_1_7 farm">2.22 (1.67, 2.99)</td>
-<td class="gt_row gt_right" headers="stub_1_7 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_7 procesing">0.47 (0.22, 0.82)</td>
-<td class="gt_row gt_right" headers="stub_1_7 transport">0.25 (0.18, 0.34)</td>
-<td class="gt_row gt_right" headers="stub_1_7 retail">0.04 (0.04, 0.04)</td>
-<td class="gt_row gt_right" headers="stub_1_7 pack">0.78 (0.76, 0.79)</td>
-<td class="gt_row gt_right" headers="stub_1_7 losses">0.41 (0.27, 0.56)</td>
+<td id="stub_1_7" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Oils</td>
+<td class="gt_row gt_center" headers="stub_1_7 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Bottle Droplet" role="img" viewbox="0 0 320 512" style="height:1em;width:0.62em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Bottle Droplet
+</title>
+<path d="M96 0C82.7 0 72 10.7 72 24s10.7 24 24 24c4.4 0 8 3.6 8 8v64.9c0 12.2-7.2 23.1-17.2 30.1C53.7 174.1 32 212.5 32 256V448c0 35.3 28.7 64 64 64H224c35.3 0 64-28.7 64-64V256c0-43.5-21.7-81.9-54.8-105c-10-7-17.2-17.9-17.2-30.1V56c0-4.4 3.6-8 8-8c13.3 0 24-10.7 24-24s-10.7-24-24-24l-8 0 0 0 0 0H104l0 0 0 0L96 0zm64 382c-26.5 0-48-20.1-48-45c0-16.8 22.1-48.1 36.3-66.4c6-7.8 17.5-7.8 23.5 0C185.9 288.9 208 320.2 208 337c0 24.9-21.5 45-48 45z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_7 n" style="font-size: smaller; background-color: #FAFAFA">5</td>
+<td class="gt_row gt_center" headers="stub_1_7 land" style="font-size: smaller; background-color: #FAFAFA">1.1 (-0.0, 2.3)</td>
+<td class="gt_row gt_center" headers="stub_1_7 farm" style="font-size: smaller; background-color: #FAFAFA">2.2 (1.7, 3.0)</td>
+<td class="gt_row gt_center" headers="stub_1_7 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_7 processing" style="font-size: smaller; background-color: #FAFAFA">0.5 (0.2, 0.8)</td>
+<td class="gt_row gt_center" headers="stub_1_7 transport" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.2, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_7 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_7 pack" style="font-size: smaller; background-color: #FAFAFA">0.8 (0.8, 0.8)</td>
+<td class="gt_row gt_center" headers="stub_1_7 losses" style="font-size: smaller; background-color: #FAFAFA">0.4 (0.3, 0.6)</td>
 </tr>
 <tr class="even">
-<td id="stub_1_8" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Plant-based Alternatives</td>
-<td class="gt_row gt_right" headers="stub_1_8 land">0.57 (0.18, 0.96)</td>
-<td class="gt_row gt_right" headers="stub_1_8 farm">0.29 (0.09, 0.49)</td>
-<td class="gt_row gt_right" headers="stub_1_8 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_8 procesing">0.48 (0.16, 0.79)</td>
-<td class="gt_row gt_right" headers="stub_1_8 transport">0.14 (0.11, 0.18)</td>
-<td class="gt_row gt_right" headers="stub_1_8 retail">0.27 (0.27, 0.27)</td>
-<td class="gt_row gt_right" headers="stub_1_8 pack">0.14 (0.10, 0.18)</td>
-<td class="gt_row gt_right" headers="stub_1_8 losses">0.18 (0.06, 0.29)</td>
+<td id="stub_1_8" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Plant-based Alternatives</td>
+<td class="gt_row gt_center" headers="stub_1_8 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Leaf" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Leaf
+</title>
+<path d="M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.3 5.4c-25.9 5.9-49.9 16.4-71.4 30.7c0 0 0 0 0 0C38.3 298.8 0 364.9 0 440v16c0 13.3 10.7 24 24 24s24-10.7 24-24V440c0-48.7 20.7-92.5 53.8-123.2C121.6 392.3 190.3 448 272 448l1 0c132.1-.7 239-130.9 239-291.4c0-42.6-7.5-83.1-21.1-119.6c-2.6-6.9-12.7-6.6-16.2-.1C455.9 72.1 418.7 96 376 96L272 96z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_8 n" style="font-size: smaller; background-color: #FAFAFA">2</td>
+<td class="gt_row gt_center" headers="stub_1_8 land" style="font-size: smaller; background-color: #FAFAFA">0.6 (0.2, 1.0)</td>
+<td class="gt_row gt_center" headers="stub_1_8 farm" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.1, 0.5)</td>
+<td class="gt_row gt_center" headers="stub_1_8 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_8 processing" style="font-size: smaller; background-color: #FAFAFA">0.5 (0.2, 0.8)</td>
+<td class="gt_row gt_center" headers="stub_1_8 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_8 retail" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.3, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_8 pack" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_8 losses" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.3)</td>
 </tr>
 <tr class="odd">
-<td id="stub_1_9" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Sugars</td>
-<td class="gt_row gt_right" headers="stub_1_9 land">0.63 (0.00, 1.26)</td>
-<td class="gt_row gt_right" headers="stub_1_9 farm">0.51 (0.49, 0.54)</td>
-<td class="gt_row gt_right" headers="stub_1_9 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_9 procesing">0.14 (0.04, 0.24)</td>
-<td class="gt_row gt_right" headers="stub_1_9 transport">0.71 (0.63, 0.79)</td>
-<td class="gt_row gt_right" headers="stub_1_9 retail">0.04 (0.04, 0.04)</td>
-<td class="gt_row gt_right" headers="stub_1_9 pack">0.09 (0.08, 0.09)</td>
-<td class="gt_row gt_right" headers="stub_1_9 losses">0.38 (0.28, 0.49)</td>
+<td id="stub_1_9" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Sugars</td>
+<td class="gt_row gt_center" headers="stub_1_9 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Cubes Stacked" role="img" viewbox="0 0 448 512" style="height:1em;width:0.88em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Cubes Stacked
+</title>
+<path d="M192 64v64c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V64c0-17.7-14.3-32-32-32H224c-17.7 0-32 14.3-32 32zM82.7 207c-15.3 8.8-20.5 28.4-11.7 43.7l32 55.4c8.8 15.3 28.4 20.5 43.7 11.7l55.4-32c15.3-8.8 20.5-28.4 11.7-43.7l-32-55.4c-8.8-15.3-28.4-20.5-43.7-11.7L82.7 207zM288 192c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V224c0-17.7-14.3-32-32-32H288zm64 160c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V384c0-17.7-14.3-32-32-32H352zM160 384v64c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V384c0-17.7-14.3-32-32-32H192c-17.7 0-32 14.3-32 32zM32 352c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32H96c17.7 0 32-14.3 32-32V384c0-17.7-14.3-32-32-32H32z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_9 n" style="font-size: smaller; background-color: #FAFAFA">2</td>
+<td class="gt_row gt_center" headers="stub_1_9 land" style="font-size: smaller; background-color: #FAFAFA">0.6 (0.0, 1.3)</td>
+<td class="gt_row gt_center" headers="stub_1_9 farm" style="font-size: smaller; background-color: #FAFAFA">0.5 (0.5, 0.5)</td>
+<td class="gt_row gt_center" headers="stub_1_9 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_9 processing" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.0, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_9 transport" style="font-size: smaller; background-color: #FAFAFA">0.7 (0.6, 0.8)</td>
+<td class="gt_row gt_center" headers="stub_1_9 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_9 pack" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_9 losses" style="font-size: smaller; background-color: #FAFAFA">0.4 (0.3, 0.5)</td>
 </tr>
 <tr class="even">
-<td id="stub_1_10" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Vegetables</td>
-<td class="gt_row gt_right" headers="stub_1_10 land">0.10 (0.00, 0.30)</td>
-<td class="gt_row gt_right" headers="stub_1_10 farm">0.21 (0.18, 0.24)</td>
-<td class="gt_row gt_right" headers="stub_1_10 animal">0.00 (0.00, 0.00)</td>
-<td class="gt_row gt_right" headers="stub_1_10 procesing">0.01 (0.00, 0.03)</td>
-<td class="gt_row gt_right" headers="stub_1_10 transport">0.11 (0.09, 0.13)</td>
-<td class="gt_row gt_right" headers="stub_1_10 retail">0.03 (0.02, 0.04)</td>
-<td class="gt_row gt_right" headers="stub_1_10 pack">0.04 (0.04, 0.04)</td>
-<td class="gt_row gt_right" headers="stub_1_10 losses">0.12 (0.07, 0.21)</td>
+<td id="stub_1_10" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Vegetables</td>
+<td class="gt_row gt_center" headers="stub_1_10 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Carrot" role="img" viewbox="0 0 512 512" style="height:1em;width:1em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Carrot
+</title>
+<path d="M346.7 6C337.6 17 320 42.3 320 72c0 40 15.3 55.3 40 80s40 40 80 40c29.7 0 55-17.6 66-26.7c4-3.3 6-8.2 6-13.3s-2-10-6-13.2c-11.4-9.1-38.3-26.8-74-26.8c-32 0-40 8-40 8s8-8 8-40c0-35.7-17.7-62.6-26.8-74C370 2 365.1 0 360 0s-10 2-13.3 6zM244.6 136c-40 0-77.1 18.1-101.7 48.2l60.5 60.5c6.2 6.2 6.2 16.4 0 22.6s-16.4 6.2-22.6 0l-55.3-55.3 0 .1L2.2 477.9C-2 487-.1 497.8 7 505s17.9 9 27.1 4.8l134.7-62.4-52.1-52.1c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L199.7 433l100.2-46.4c46.4-21.5 76.2-68 76.2-119.2C376 194.8 317.2 136 244.6 136z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_10 n" style="font-size: smaller; background-color: #FAFAFA">6</td>
+<td class="gt_row gt_center" headers="stub_1_10 land" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.0, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_10 farm" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.2, 0.2)</td>
+<td class="gt_row gt_center" headers="stub_1_10 animal" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_10 processing" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_10 transport" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.1)</td>
+<td class="gt_row gt_center" headers="stub_1_10 retail" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_10 pack" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_10 losses" style="font-size: smaller; background-color: #FAFAFA">0.1 (0.1, 0.2)</td>
 </tr>
 <tr class="odd">
-<td id="stub_1_11" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Water Animals</td>
-<td class="gt_row gt_right" headers="stub_1_11 land">0.76 (0.33, 1.19)</td>
-<td class="gt_row gt_right" headers="stub_1_11 farm">10.76 (8.06, 13.45)</td>
-<td class="gt_row gt_right" headers="stub_1_11 animal">2.93 (1.83, 4.03)</td>
-<td class="gt_row gt_right" headers="stub_1_11 procesing">0.02 (0.00, 0.04)</td>
-<td class="gt_row gt_right" headers="stub_1_11 transport">0.29 (0.25, 0.33)</td>
-<td class="gt_row gt_right" headers="stub_1_11 retail">0.22 (0.09, 0.35)</td>
-<td class="gt_row gt_right" headers="stub_1_11 pack">0.34 (0.14, 0.54)</td>
-<td class="gt_row gt_right" headers="stub_1_11 losses">4.93 (2.03, 7.83)</td>
+<td id="stub_1_11" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row" style="font-size: smaller; font-weight: bold; text-transform: uppercase">Water Animals</td>
+<td class="gt_row gt_center" headers="stub_1_11 symbol" style="font-size: smaller; background-color: #FFC3A8"><span style="white-space:nowrap;">
+<svg aria-label="Fish" role="img" viewbox="0 0 576 512" style="height:1em;width:1.12em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:currentColor;overflow:visible;position:relative;">
+<title>
+Fish
+</title>
+<path d="M180.5 141.5C219.7 108.5 272.6 80 336 80s116.3 28.5 155.5 61.5c39.1 33 66.9 72.4 81 99.8c4.7 9.2 4.7 20.1 0 29.3c-14.1 27.4-41.9 66.8-81 99.8C452.3 403.5 399.4 432 336 432s-116.3-28.5-155.5-61.5c-16.2-13.7-30.5-28.5-42.7-43.1L48.1 379.6c-12.5 7.3-28.4 5.3-38.7-4.9S-3 348.7 4.2 336.1L50 256 4.2 175.9c-7.2-12.6-5-28.4 5.3-38.6s26.1-12.2 38.7-4.9l89.7 52.3c12.2-14.6 26.5-29.4 42.7-43.1zM448 256a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"></path>
+</svg>
+</span></td>
+<td class="gt_row gt_center" headers="stub_1_11 n" style="font-size: smaller; background-color: #FAFAFA">2</td>
+<td class="gt_row gt_center" headers="stub_1_11 land" style="font-size: smaller; background-color: #FAFAFA">0.8 (0.3, 1.2)</td>
+<td class="gt_row gt_center" headers="stub_1_11 farm" style="font-size: smaller; background-color: #FAFAFA">10.8 (8.1, 13.5)</td>
+<td class="gt_row gt_center" headers="stub_1_11 animal" style="font-size: smaller; background-color: #FAFAFA">2.9 (1.8, 4.0)</td>
+<td class="gt_row gt_center" headers="stub_1_11 processing" style="font-size: smaller; background-color: #FAFAFA">0.0 (0.0, 0.0)</td>
+<td class="gt_row gt_center" headers="stub_1_11 transport" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.2, 0.3)</td>
+<td class="gt_row gt_center" headers="stub_1_11 retail" style="font-size: smaller; background-color: #FAFAFA">0.2 (0.1, 0.4)</td>
+<td class="gt_row gt_center" headers="stub_1_11 pack" style="font-size: smaller; background-color: #FAFAFA">0.3 (0.1, 0.5)</td>
+<td class="gt_row gt_center" headers="stub_1_11 losses" style="font-size: smaller; background-color: #FAFAFA">4.9 (2.0, 7.8)</td>
 </tr>
-</tbody>
+</tbody><tfoot class="gt_footnotes">
+<tr class="odd">
+<td colspan="11" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> Mean (95% bootstrap CI; 1000 resamples)</td>
+</tr>
+</tfoot>
+
 </table>
 
 </div>
@@ -1077,6 +1258,7 @@ Attaching package: 'dplyr'</code></pre>
 </div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
