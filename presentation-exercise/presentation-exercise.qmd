@@ -4,14 +4,16 @@ title: "Presentation Exercise"
 
 # Introduction
 
-I will be reproducing a visualization from [this](https://ourworldindata.org/food-choice-vs-eating-local) article by Hannah Ritchie in the *Our World in Data* journal. The data was free for download with the graph, which I've pasted below. AN interactive version of the chart can be found at the link. We'll see if I have time to reproduce the interactive version as well.
+I will be reproducing a visualization and table from data which can be found [here](https://ourworldindata.org/grapher/food-emissions-supply-chain). The [full article](https://ourworldindata.org/food-choice-vs-eating-local) by Hannah Ritchie is in the *Our World in Data* journal. The data was free for download along with an image of the graph, which I've pasted below.
 
 <div style="text-align: center;">
   ![](food-emissions-supply-chain.png)
 
 </div>
 
-# AI's Attempt
+# Reproducing a graph
+
+## AI's Attempt
 
 Per the instructions, I asked ChatGPT to write me code that will reproduce the figure. I uploaded the above png and wrote "I have the data in this graph. Write R code to recreate it". I received the following output.
 
@@ -52,24 +54,25 @@ ggplot(df, aes(x = Emissions, y = reorder(Food, -Emissions), fill = Category)) +
   theme_minimal()
 ```
 
-That's pretty solid if you ask me. I don't forsee ChatGPT improving the figure much so I'm going to take over from here. Anything AI can do, I can do better😊.
+That's pretty solid if you ask me. The figure could use some cleaning up of labels, text, and colors. It also of course needs to consider the real data. I don't foresee ChatGPT improving the figure much more without some user-machine wrangling so I'm going to take over from here. Anything AI can do, I can (theoretically) do😊.
 
-# MJ's Attempt
+## MJ's Attempt
 
-## Setup
+### Setup
 
 ```{r}
 # load packages
 library(dplyr)
 ```
 
-
 ```{r}
 # load data
-dat <- read.csv(here::here("presentation-exercise/data/food-emissions-supply-chain.csv"))
+dat <- read.csv(
+  here::here("presentation-exercise/data/food-emissions-supply-chain.csv")
+  )
 ```
 
-## Data processing
+### Data processing
 
 ```{r}
 dat1 <- dat %>%
@@ -84,29 +87,192 @@ dat1 <- dat %>%
     packaging = food_emissions_packaging,
     losses = food_emissions_losses
   ) %>%
-  select(-Code, -Year) %>%
+  select(-Code, -Year) %>% # remove unused columns
   mutate(
     total_emissions = rowSums(select(
       ., land_use, farm, animal_feed, processing, 
       transport, retail, packaging, losses))
+  )
+
+# pivot longer for plotting bars
+dat2 <- dat1 %>%
+  # data includes more items then shown on graph
+  filter(
+    food_items %in% c(
+      "Beef (beef herd)", "Dark Chocolate", "Lamb & Mutton", 
+      "Beef (dairy herd)", "Coffee", "Shrimps (farmed)", "Cheese", 
+      "Fish (farmed)", "Pig Meat", "Poultry Meat", "Palm Oil", 
+      "Olive Oil", "Eggs", "Rice", "Sunflower Oil", "Tofu", "Milk", 
+      "Tomatoes", "Peas", "Bananas"
+    )
+    ) %>%
+  tidyr::pivot_longer(
+    cols = -food_items,
+    names_to = "category",
+    values_to = "emissions"
+  ) 
+
+# remove "total" row, clean up labels
+dat3 <- dat2 %>%
+  filter(
+    category != "total_emissions"
   ) %>%
-  arrange(desc(total_emissions)) # sort by total emissions
+  # clean category labels
+  mutate(
+    category = case_when(
+      category == "land_use" ~ "Land use change",
+      category == "farm" ~ "Farm",
+      category == "animal_feed" ~ "Animal feed",
+      category == "processing" ~ "Processing",
+      category == "transport" ~ "Transport",
+      category == "retail" ~ "Retail", 
+      category == "packaging" ~ "Packaging",
+      category == "losses" ~ "Losses", 
+      TRUE ~ category
+    ), 
+    # for ordering on plot
+    category = factor(category, levels = c(
+      "Losses", "Packaging", "Retail", "Transport", "Processing", 
+      "Animal feed", "Farm", "Land use change"
+    ))
+  )
 
-categories <- c("Land use change", "Farm", "Animal feed", "Processing", "Transport", "Retail", "Packaging", "Losses")
-
-dat2 <- data.frame(Food = rep(food_items, each = 8), 
-                 #Category = rep(categories, times = length(food_items)), 
-                 Emissions = c(land_use, farm, animal_feed, processing, transport, retail, packaging, losses))
-
-# Plot the data
-ggplot(df, aes(x = Emissions, y = reorder(Food, -Emissions), fill = Category)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Food: Greenhouse Gas Emissions Across the Supply Chain",
-       x = "Emissions (kg CO₂eq per kg of food)",
-       y = "Food Item") +
-  scale_fill_manual(values = c("#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494", "#B3B3B3", "#66C2A5", "#FC8D62")) +
-  theme_minimal()
-
+# reserve a separate dataset with total emissions
+dat4 <- dat2 %>%
+  filter(
+    category == "total_emissions"
+  )
 ```
 
+### Plot the data
+```{r, fig.width=10, fig.height=7}
+ggplot(dat3, aes(x = emissions, y = reorder(food_items, emissions), fill = category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Food: greenhouse gas emissions across the supply chain",
+       subtitle = "Greenhouse gas emissions are measured in kilograms of carbon dioxide-equivalents (CO2eq) per kilogram of food.",
+       x = NULL,
+       y = NULL,
+       fill = NULL
+       )+
+  scale_fill_manual(values = c("darkseagreen", "burlywood", "orange", "cornflowerblue", "indianred", "yellow", "lightslategray", "lavender"),
+                    limits = rev(levels(dat3$category))) +
+  theme_minimal() +
+  theme(legend.position = "top",
+        plot.title = element_text(size = 20),
+        legend.text = element_text(size = 11),
+        axis.text.y = element_text(size = 12),
+        panel.grid = element_blank()) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_text(data = dat4, 
+            aes(x = emissions, y = food_items, 
+                label = paste(round(emissions, 1), "kg")), 
+            hjust = -0.05,
+            size = 3)
+```
+
+# Creating a table
+
+I'll be using the same data that created the figure above to create a table. To make it more interesting, I'm going to use the full dataset to subset by food source/group.
+
+Formatted text which can be bold, italic, etc.
+- certainly in the title etc.
+
+Colored text or highlighted cells
+- highlight the cell with the greatest emmission group maybe?
+
+Additional text outside of the regular table structure like spanning column headers or correctly attributed footnotes
+- footnote on greenhouse gas emissions?
+
+A descriptive caption explaining the useful information summary that your table represents.
+
+Additionally, your table must contain at least one of the following advanced features:
+
+A column with some type of image for the values, which could potentially be a data visualization (e.g. sparklines).
+Automatically calculated summary statistics (summary statistics that you calculate manually do not count towards this objective)
+Automatically applied (not manual) conditional formatting (potentially overlapping with formatted or colored text/cells)
+Interactive features
+
+## Setup
+```{r}
+# load packages
+library(gt)
+library(gtsummary)
+```
+
+# Data processing
+```{r}
+# put food items into categories
+dat5 <- dat1 %>%
+  mutate(
+    food_group = case_when(
+      food_items %in% c("Beef (beef herd)", "Beef (dairy herd)","Lamb & Mutton",
+                        "Pig Meat", "Poultry Meat") ~ "Land Animals",
+      food_items %in% c("Fish (farmed)", "Shrimps (farmed)") ~ "Water Animals",
+      food_items %in% c("Cheese", "Eggs", "Milk") ~ "Animal By-products",
+      food_items %in% c("Apples", "Bananas", "Berries & Grapes", "Citrus Fruit",
+                        "Other Fruit", "Tomatoes") ~ "Fruits",
+      food_items %in% c("Root Vegetables", "Onions & Leeks", "Brassicas",
+                        "Other Vegetables", "Potatoes", 
+                        "Cassava") ~ "Vegetables",
+      food_items %in% c("Maize", "Barley", "Rice", "Wheat & Rye", "Oatmeal",
+                        "Other Pulses", "Peas") ~ "Legumes & Grains",
+      food_items %in% c("Beet Sugar", "Cane Sugar") ~ "Sugars",
+      food_items %in% c("Groundnuts", "Nuts") ~ "Nuts & Seeds",
+      food_items %in% c("Olive Oil", "Rapeseed Oil", "Soybean Oil", 
+                        "Sunflower Oil", "Palm Oil") ~ "Oils",
+      food_items %in% c("Soy milk", "Tofu") ~ "Plant-based Alternatives",
+      food_items %in% c("Coffee", "Wine", "Dark Chocolate") ~ "Misc",
+      TRUE ~ "Other"
+    )
+  )
+# pivot longer for table
+dat6 <- dat5 %>%
+  select(
+    -total_emissions
+  ) %>%
+  tidyr::pivot_longer(
+    cols = c(-food_items, -food_group),
+    names_to = "category",
+    values_to = "emissions"
+  )
+
+# average over groups and sum the averages
+dat7 <- dat6 %>%
+  group_by(category, food_group) %>%
+  summarise(
+    avg_emission = round(mean(emissions), 2),
+    .groups = 'drop'
+  ) %>%
+  group_by(food_group) %>%
+  mutate(
+    tot_mean_emission = sum(avg_emission),
+    emission_percentage = round((avg_emission / tot_mean_emission) * 100, 2)
+  ) %>% 
+  ungroup() %>%
+  tidyr::pivot_wider(
+    names_from = category,
+    values_from = c(avg_emission, emission_percentage),
+    names_glue = "{.value}_{category}"
+  ) %>%
+  mutate(
+    # Combine avg_emission and emission_percentage in the desired format
+    across(
+      starts_with("avg_emission"), 
+      ~paste0(.x, " (", 
+              round(.x / sum(.x) * 100, 2), "%)"), 
+      .names = "{.col}"
+    )
+  )
+```
+
+
+# Table
+```{r}
+table <- dat7 %>%
+  gt()
+
+
+# Display the table
+table
+```
 

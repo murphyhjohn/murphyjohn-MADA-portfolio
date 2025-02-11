@@ -198,10 +198,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>I will be reproducing a visualization from <a href="https://ourworldindata.org/food-choice-vs-eating-local">this</a> article by Hannah Ritchie in the <em>Our World in Data</em> journal. The data was free for download with the graph, which I’ve pasted below. AN interactive version of the chart can be found at the link. We’ll see if I have time to reproduce the interactive version as well.</p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>I will be reproducing a visualization and table from data which can be found <a href="https://ourworldindata.org/grapher/food-emissions-supply-chain">here</a>. The <a href="https://ourworldindata.org/food-choice-vs-eating-local">full article</a> by Hannah Ritchie is in the <em>Our World in Data</em> journal. The data was free for download along with an image of the graph, which I’ve pasted below.</p>
 <div style="text-align: center;">
 <p><img src="food-emissions-supply-chain.png" class="img-fluid"></p>
 </div>
+</section>
+<section id="reproducing-a-graph" class="level1">
+<h1>Reproducing a graph</h1>
+<section id="ais-attempt" class="level2">
+<h2 class="anchored" data-anchor-id="ais-attempt">AI’s Attempt</h2>
 <p>Per the instructions, I asked ChatGPT to write me code that will reproduce the figure. I uploaded the above png and wrote “I have the data in this graph. Write R code to recreate it”. I received the following output.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
@@ -246,9 +253,851 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>That’s pretty solid if you ask me. I don’t forsee ChatGPT improving the figure much so I’m going to take over from here. Anything AI can do, I can do better😊.</p>
+<p>That’s pretty solid if you ask me. The figure could use some cleaning up of labels, text, and colors. It also of course needs to consider the real data. I don’t foresee ChatGPT improving the figure much more without some user-machine wrangling so I’m going to take over from here. Anything AI can do, I can (theoretically) do😊.</p>
+</section>
+<section id="mjs-attempt" class="level2">
+<h2 class="anchored" data-anchor-id="mjs-attempt">MJ’s Attempt</h2>
+<section id="setup" class="level3">
+<h3 class="anchored" data-anchor-id="setup">Setup</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load data</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"presentation-exercise/data/food-emissions-supply-chain.csv"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="data-processing" class="level3">
+<h3 class="anchored" data-anchor-id="data-processing">Data processing</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dat1 <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_items =</span> Entity,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_use =</span> food_emissions_land_use,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">farm =</span> food_emissions_farm,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">animal_feed =</span> food_emissions_animal_feed,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">processing =</span> food_emissions_processing,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">transport =</span> food_emissions_transport,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">retail =</span> food_emissions_retail,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">packaging =</span> food_emissions_packaging,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">losses =</span> food_emissions_losses</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Code, <span class="sc">-</span>Year) <span class="sc">%&gt;%</span> <span class="co"># remove unused columns</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_emissions =</span> <span class="fu">rowSums</span>(<span class="fu">select</span>(</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>      ., land_use, farm, animal_feed, processing, </span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>      transport, retail, packaging, losses))</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co"># pivot longer for plotting bars</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>dat2 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data includes more items then shown on graph</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    food_items <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (beef herd)"</span>, <span class="st">"Dark Chocolate"</span>, <span class="st">"Lamb &amp; Mutton"</span>, </span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Beef (dairy herd)"</span>, <span class="st">"Coffee"</span>, <span class="st">"Shrimps (farmed)"</span>, <span class="st">"Cheese"</span>, </span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Fish (farmed)"</span>, <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>, <span class="st">"Palm Oil"</span>, </span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Olive Oil"</span>, <span class="st">"Eggs"</span>, <span class="st">"Rice"</span>, <span class="st">"Sunflower Oil"</span>, <span class="st">"Tofu"</span>, <span class="st">"Milk"</span>, </span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Tomatoes"</span>, <span class="st">"Peas"</span>, <span class="st">"Bananas"</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span>food_items,</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"category"</span>,</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"emissions"</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co"># remove "total" row, clean up labels</span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>dat3 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">!=</span> <span class="st">"total_emissions"</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># clean category labels</span></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">case_when</span>(</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"land_use"</span> <span class="sc">~</span> <span class="st">"Land use change"</span>,</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"farm"</span> <span class="sc">~</span> <span class="st">"Farm"</span>,</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"animal_feed"</span> <span class="sc">~</span> <span class="st">"Animal feed"</span>,</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"processing"</span> <span class="sc">~</span> <span class="st">"Processing"</span>,</span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"transport"</span> <span class="sc">~</span> <span class="st">"Transport"</span>,</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"retail"</span> <span class="sc">~</span> <span class="st">"Retail"</span>, </span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"packaging"</span> <span class="sc">~</span> <span class="st">"Packaging"</span>,</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>      category <span class="sc">==</span> <span class="st">"losses"</span> <span class="sc">~</span> <span class="st">"Losses"</span>, </span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> category</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>    ), </span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># for ordering on plot</span></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">category =</span> <span class="fu">factor</span>(category, <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Losses"</span>, <span class="st">"Packaging"</span>, <span class="st">"Retail"</span>, <span class="st">"Transport"</span>, <span class="st">"Processing"</span>, </span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Animal feed"</span>, <span class="st">"Farm"</span>, <span class="st">"Land use change"</span></span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a><span class="co"># reserve a separate dataset with total emissions</span></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>dat4 <span class="ot">&lt;-</span> dat2 <span class="sc">%&gt;%</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>    category <span class="sc">==</span> <span class="st">"total_emissions"</span></span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="plot-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="plot-the-data">Plot the data</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dat3, <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> <span class="fu">reorder</span>(food_items, emissions), <span class="at">fill =</span> category)) <span class="sc">+</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Food: greenhouse gas emissions across the supply chain"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Greenhouse gas emissions are measured in kilograms of carbon dioxide-equivalents (CO2eq) per kilogram of food."</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="cn">NULL</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>       )<span class="sc">+</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkseagreen"</span>, <span class="st">"burlywood"</span>, <span class="st">"orange"</span>, <span class="st">"cornflowerblue"</span>, <span class="st">"indianred"</span>, <span class="st">"yellow"</span>, <span class="st">"lightslategray"</span>, <span class="st">"lavender"</span>),</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">limits =</span> <span class="fu">rev</span>(<span class="fu">levels</span>(dat3<span class="sc">$</span>category))) <span class="sc">+</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">20</span>),</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">11</span>),</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>))<span class="sc">+</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> dat4, </span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">x =</span> emissions, <span class="at">y =</span> food_items, </span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>                <span class="at">label =</span> <span class="fu">paste</span>(<span class="fu">round</span>(emissions, <span class="dv">1</span>), <span class="st">"kg"</span>)), </span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="sc">-</span><span class="fl">0.05</span>,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="presentation-exercise_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="creating-a-table" class="level1">
+<h1>Creating a table</h1>
+<p>I’ll be using the same data that created the figure above to create a table. To make it more interesting, I’m going to use the full dataset to subset by food source/group.</p>
+<p>Formatted text which can be bold, italic, etc. - certainly in the title etc.</p>
+<p>Colored text or highlighted cells - highlight the cell with the greatest emmission group maybe?</p>
+<p>Additional text outside of the regular table structure like spanning column headers or correctly attributed footnotes - footnote on greenhouse gas emissions?</p>
+<p>A descriptive caption explaining the useful information summary that your table represents.</p>
+<p>Additionally, your table must contain at least one of the following advanced features:</p>
+<p>A column with some type of image for the values, which could potentially be a data visualization (e.g.&nbsp;sparklines). Automatically calculated summary statistics (summary statistics that you calculate manually do not count towards this objective) Automatically applied (not manual) conditional formatting (potentially overlapping with formatted or colored text/cells) Interactive features</p>
+<section id="setup-1" class="level2">
+<h2 class="anchored" data-anchor-id="setup-1">Setup</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'gt' was built under R version 4.4.2</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'gtsummary' was built under R version 4.4.2</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="data-processing-1" class="level1">
+<h1>Data processing</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># put food items into categories</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>dat5 <span class="ot">&lt;-</span> dat1 <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">food_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beef (beef herd)"</span>, <span class="st">"Beef (dairy herd)"</span>,<span class="st">"Lamb &amp; Mutton"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Pig Meat"</span>, <span class="st">"Poultry Meat"</span>) <span class="sc">~</span> <span class="st">"Land Animals"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Fish (farmed)"</span>, <span class="st">"Shrimps (farmed)"</span>) <span class="sc">~</span> <span class="st">"Water Animals"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Cheese"</span>, <span class="st">"Eggs"</span>, <span class="st">"Milk"</span>) <span class="sc">~</span> <span class="st">"Animal By-products"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Apples"</span>, <span class="st">"Bananas"</span>, <span class="st">"Berries &amp; Grapes"</span>, <span class="st">"Citrus Fruit"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Fruit"</span>, <span class="st">"Tomatoes"</span>) <span class="sc">~</span> <span class="st">"Fruits"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Root Vegetables"</span>, <span class="st">"Onions &amp; Leeks"</span>, <span class="st">"Brassicas"</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Vegetables"</span>, <span class="st">"Potatoes"</span>, </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Cassava"</span>) <span class="sc">~</span> <span class="st">"Vegetables"</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Maize"</span>, <span class="st">"Barley"</span>, <span class="st">"Rice"</span>, <span class="st">"Wheat &amp; Rye"</span>, <span class="st">"Oatmeal"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Other Pulses"</span>, <span class="st">"Peas"</span>) <span class="sc">~</span> <span class="st">"Legumes &amp; Grains"</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Beet Sugar"</span>, <span class="st">"Cane Sugar"</span>) <span class="sc">~</span> <span class="st">"Sugars"</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Groundnuts"</span>, <span class="st">"Nuts"</span>) <span class="sc">~</span> <span class="st">"Nuts &amp; Seeds"</span>,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Olive Oil"</span>, <span class="st">"Rapeseed Oil"</span>, <span class="st">"Soybean Oil"</span>, </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"Sunflower Oil"</span>, <span class="st">"Palm Oil"</span>) <span class="sc">~</span> <span class="st">"Oils"</span>,</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Soy milk"</span>, <span class="st">"Tofu"</span>) <span class="sc">~</span> <span class="st">"Plant-based Alternatives"</span>,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coffee"</span>, <span class="st">"Wine"</span>, <span class="st">"Dark Chocolate"</span>) <span class="sc">~</span> <span class="st">"Misc"</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Other"</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co"># pivot longer for table</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>dat6 <span class="ot">&lt;-</span> dat5 <span class="sc">%&gt;%</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>food_items, <span class="sc">-</span>total_emissions</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span>food_group,</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"category"</span>,</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"emissions"</span></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="table" class="level1">
+<h1>Table</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> dat6 <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_summary</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> food_group,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">include =</span> category</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="pievubimkm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#pievubimkm table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#pievubimkm thead, #pievubimkm tbody, #pievubimkm tfoot, #pievubimkm tr, #pievubimkm td, #pievubimkm th {
+  border-style: none;
+}
+
+#pievubimkm p {
+  margin: 0;
+  padding: 0;
+}
+
+#pievubimkm .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#pievubimkm .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#pievubimkm .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#pievubimkm .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#pievubimkm .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#pievubimkm .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pievubimkm .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#pievubimkm .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#pievubimkm .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#pievubimkm .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#pievubimkm .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#pievubimkm .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#pievubimkm .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#pievubimkm .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#pievubimkm .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#pievubimkm .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#pievubimkm .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#pievubimkm .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#pievubimkm .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pievubimkm .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#pievubimkm .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#pievubimkm .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#pievubimkm .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pievubimkm .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#pievubimkm .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#pievubimkm .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pievubimkm .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pievubimkm .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#pievubimkm .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pievubimkm .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#pievubimkm .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pievubimkm .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#pievubimkm .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pievubimkm .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#pievubimkm .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pievubimkm .gt_left {
+  text-align: left;
+}
+
+#pievubimkm .gt_center {
+  text-align: center;
+}
+
+#pievubimkm .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#pievubimkm .gt_font_normal {
+  font-weight: normal;
+}
+
+#pievubimkm .gt_font_bold {
+  font-weight: bold;
+}
+
+#pievubimkm .gt_font_italic {
+  font-style: italic;
+}
+
+#pievubimkm .gt_super {
+  font-size: 65%;
+}
+
+#pievubimkm .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#pievubimkm .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#pievubimkm .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#pievubimkm .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#pievubimkm .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#pievubimkm .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#pievubimkm .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#pievubimkm .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#pievubimkm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header gt_col_headings">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="stat_1" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Animal By-products</strong><br> N = 24<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_2" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Fruits</strong><br> N = 48<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_3" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Land Animals</strong><br> N = 40<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_4" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Legumes &amp; Grains</strong><br> N = 56<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_5" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Misc</strong><br> N = 24<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_6" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Nuts &amp; Seeds</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_7" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Oils</strong><br> N = 40<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_8" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Plant-based Alternatives</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_9" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Sugars</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_10" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Vegetables</strong><br> N = 48<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_11" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Water Animals</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">category</td>
+<td class="gt_row gt_center" headers="stat_1"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_2"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_3"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_4"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_5"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_6"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_7"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_8"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_9"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_10"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_11"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;animal_feed</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;farm</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;land_use</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;losses</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;packaging</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;processing</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;retail</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;transport</td>
+<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
+<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
+<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
+<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
+<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
+<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+</tr>
+</tbody><tfoot class="gt_footnotes">
+<tr class="even">
+<td colspan="12" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> n (%)</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
