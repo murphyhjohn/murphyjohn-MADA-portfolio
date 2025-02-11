@@ -225,54 +225,45 @@ dat5 <- dat1 %>%
       TRUE ~ "Other"
     )
   )
-# pivot longer for table
-dat6 <- dat5 %>%
-  select(
-    -total_emissions
-  ) %>%
-  tidyr::pivot_longer(
-    cols = c(-food_items, -food_group),
-    names_to = "category",
-    values_to = "emissions"
-  )
-
-# average over groups and sum the averages
-dat7 <- dat6 %>%
-  group_by(category, food_group) %>%
-  summarise(
-    avg_emission = round(mean(emissions), 2),
-    .groups = 'drop'
-  ) %>%
-  group_by(food_group) %>%
-  mutate(
-    tot_mean_emission = sum(avg_emission),
-    emission_percentage = round((avg_emission / tot_mean_emission) * 100, 2)
-  ) %>% 
-  ungroup() %>%
-  tidyr::pivot_wider(
-    names_from = category,
-    values_from = c(avg_emission, emission_percentage),
-    names_glue = "{.value}_{category}"
-  ) %>%
-  mutate(
-    # Combine avg_emission and emission_percentage in the desired format
-    across(
-      starts_with("avg_emission"), 
-      ~paste0(.x, " (", 
-              round(.x / sum(.x) * 100, 2), "%)"), 
-      .names = "{.col}"
-    )
-  )
 ```
 
-
-# Table
 ```{r}
-table <- dat7 %>%
-  gt()
+# summary stats by hand
+format_ci <- function(df, d = 2) {
+	fmt_str <- paste0("%.", d, "f")
+	out <- paste0(
+		sprintf(fmt_str, df$y), " (",
+		sprintf(fmt_str, df$ymin), ", ",
+		sprintf(fmt_str, df$ymax), ")"
+	)
+	
+	return(out)
+}
 
+tab <- dat5 %>%
+  group_by(food_group) %>%
+  summarise(
+    land = ggplot2::mean_cl_boot(land_use) %>% format_ci(),
+		farm = ggplot2::mean_cl_boot(farm) %>% format_ci(),
+		animal = ggplot2::mean_cl_boot(animal_feed) %>% format_ci(),
+		procesing = ggplot2::mean_cl_boot(processing) %>% format_ci(),
+		transport = ggplot2::mean_cl_boot(transport) %>% format_ci(),
+		retail = ggplot2::mean_cl_boot(retail) %>% format_ci(),
+		pack = ggplot2::mean_cl_boot(packaging) |> format_ci(),
+		losses = ggplot2::mean_cl_boot(losses) |> format_ci(),
+  ) %>%
+  gt(rowname_col = "food_group") %>%
+  cols_label(
+    land = "Land use change",
+		farm = "Farm",
+		animal = "Animal feed",
+		procesing = "Processing",
+		transport = "Transport",
+		retail = "Retail",
+		pack = "Packaging",
+		losses = "Losses"
+  )
 
-# Display the table
-table
+tab
 ```
 

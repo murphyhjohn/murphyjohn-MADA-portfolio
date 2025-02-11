@@ -442,46 +442,64 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>      food_items <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coffee"</span>, <span class="st">"Wine"</span>, <span class="st">"Dark Chocolate"</span>) <span class="sc">~</span> <span class="st">"Misc"</span>,</span>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Other"</span></span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co"># pivot longer for table</span></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>dat6 <span class="ot">&lt;-</span> dat5 <span class="sc">%&gt;%</span></span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>food_items, <span class="sc">-</span>total_emissions</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span>food_group,</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"category"</span>,</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"emissions"</span></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="table" class="level1">
-<h1>Table</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> dat6 <span class="sc">%&gt;%</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_summary</span>(</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> food_group,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">include =</span> category</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summary stats by hand</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>format_ci <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">d =</span> <span class="dv">2</span>) {</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    fmt_str <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"%."</span>, d, <span class="st">"f"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>y), <span class="st">" ("</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymin), <span class="st">", "</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sprintf</span>(fmt_str, df<span class="sc">$</span>ymax), <span class="st">")"</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(out)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> dat5 <span class="sc">%&gt;%</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(food_group) <span class="sc">%&gt;%</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(land_use) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">farm =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(farm) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">animal =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(animal_feed) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">procesing =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(processing) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">transport =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(transport) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">retail =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(retail) <span class="sc">%&gt;%</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">pack =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(packaging) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">losses =</span> ggplot2<span class="sc">::</span><span class="fu">mean_cl_boot</span>(losses) <span class="sc">|&gt;</span> <span class="fu">format_ci</span>(),</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>(<span class="at">rowname_col =</span> <span class="st">"food_group"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">land =</span> <span class="st">"Land use change"</span>,</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">farm =</span> <span class="st">"Farm"</span>,</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">animal =</span> <span class="st">"Animal feed"</span>,</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">procesing =</span> <span class="st">"Processing"</span>,</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">transport =</span> <span class="st">"Transport"</span>,</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">retail =</span> <span class="st">"Retail"</span>,</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">pack =</span> <span class="st">"Packaging"</span>,</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">losses =</span> <span class="st">"Losses"</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>tab</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div id="pievubimkm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#pievubimkm table {
+<div id="ouoxaiyxdn" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ouoxaiyxdn table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#pievubimkm thead, #pievubimkm tbody, #pievubimkm tfoot, #pievubimkm tr, #pievubimkm td, #pievubimkm th {
+#ouoxaiyxdn thead, #ouoxaiyxdn tbody, #ouoxaiyxdn tfoot, #ouoxaiyxdn tr, #ouoxaiyxdn td, #ouoxaiyxdn th {
   border-style: none;
 }
 
-#pievubimkm p {
+#ouoxaiyxdn p {
   margin: 0;
   padding: 0;
 }
 
-#pievubimkm .gt_table {
+#ouoxaiyxdn .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -507,12 +525,12 @@ Attaching package: 'dplyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#pievubimkm .gt_caption {
+#ouoxaiyxdn .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#pievubimkm .gt_title {
+#ouoxaiyxdn .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -524,7 +542,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#pievubimkm .gt_subtitle {
+#ouoxaiyxdn .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -536,7 +554,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-width: 0;
 }
 
-#pievubimkm .gt_heading {
+#ouoxaiyxdn .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -548,13 +566,13 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#pievubimkm .gt_bottom_border {
+#ouoxaiyxdn .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#pievubimkm .gt_col_headings {
+#ouoxaiyxdn .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -569,7 +587,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#pievubimkm .gt_col_heading {
+#ouoxaiyxdn .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -589,7 +607,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#pievubimkm .gt_column_spanner_outer {
+#ouoxaiyxdn .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -601,15 +619,15 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 4px;
 }
 
-#pievubimkm .gt_column_spanner_outer:first-child {
+#ouoxaiyxdn .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#pievubimkm .gt_column_spanner_outer:last-child {
+#ouoxaiyxdn .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#pievubimkm .gt_column_spanner {
+#ouoxaiyxdn .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -621,11 +639,11 @@ Attaching package: 'dplyr'</code></pre>
   width: 100%;
 }
 
-#pievubimkm .gt_spanner_row {
+#ouoxaiyxdn .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#pievubimkm .gt_group_heading {
+#ouoxaiyxdn .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -651,7 +669,7 @@ Attaching package: 'dplyr'</code></pre>
   text-align: left;
 }
 
-#pievubimkm .gt_empty_group_heading {
+#ouoxaiyxdn .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -666,15 +684,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: middle;
 }
 
-#pievubimkm .gt_from_md > :first-child {
+#ouoxaiyxdn .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#pievubimkm .gt_from_md > :last-child {
+#ouoxaiyxdn .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#pievubimkm .gt_row {
+#ouoxaiyxdn .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -693,7 +711,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#pievubimkm .gt_stub {
+#ouoxaiyxdn .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -706,7 +724,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#pievubimkm .gt_stub_row_group {
+#ouoxaiyxdn .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -720,15 +738,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: top;
 }
 
-#pievubimkm .gt_row_group_first td {
+#ouoxaiyxdn .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#pievubimkm .gt_row_group_first th {
+#ouoxaiyxdn .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#pievubimkm .gt_summary_row {
+#ouoxaiyxdn .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -738,16 +756,16 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#pievubimkm .gt_first_summary_row {
+#ouoxaiyxdn .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#pievubimkm .gt_first_summary_row.thick {
+#ouoxaiyxdn .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#pievubimkm .gt_last_summary_row {
+#ouoxaiyxdn .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -757,7 +775,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#pievubimkm .gt_grand_summary_row {
+#ouoxaiyxdn .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -767,7 +785,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#pievubimkm .gt_first_grand_summary_row {
+#ouoxaiyxdn .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -777,7 +795,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#pievubimkm .gt_last_grand_summary_row_top {
+#ouoxaiyxdn .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -787,11 +805,11 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#pievubimkm .gt_striped {
+#ouoxaiyxdn .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#pievubimkm .gt_table_body {
+#ouoxaiyxdn .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -800,7 +818,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#pievubimkm .gt_footnotes {
+#ouoxaiyxdn .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -814,7 +832,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#pievubimkm .gt_footnote {
+#ouoxaiyxdn .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -823,7 +841,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#pievubimkm .gt_sourcenotes {
+#ouoxaiyxdn .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -837,7 +855,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#pievubimkm .gt_sourcenote {
+#ouoxaiyxdn .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -845,251 +863,213 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#pievubimkm .gt_left {
+#ouoxaiyxdn .gt_left {
   text-align: left;
 }
 
-#pievubimkm .gt_center {
+#ouoxaiyxdn .gt_center {
   text-align: center;
 }
 
-#pievubimkm .gt_right {
+#ouoxaiyxdn .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#pievubimkm .gt_font_normal {
+#ouoxaiyxdn .gt_font_normal {
   font-weight: normal;
 }
 
-#pievubimkm .gt_font_bold {
+#ouoxaiyxdn .gt_font_bold {
   font-weight: bold;
 }
 
-#pievubimkm .gt_font_italic {
+#ouoxaiyxdn .gt_font_italic {
   font-style: italic;
 }
 
-#pievubimkm .gt_super {
+#ouoxaiyxdn .gt_super {
   font-size: 65%;
 }
 
-#pievubimkm .gt_footnote_marks {
+#ouoxaiyxdn .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#pievubimkm .gt_asterisk {
+#ouoxaiyxdn .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#pievubimkm .gt_indent_1 {
+#ouoxaiyxdn .gt_indent_1 {
   text-indent: 5px;
 }
 
-#pievubimkm .gt_indent_2 {
+#ouoxaiyxdn .gt_indent_2 {
   text-indent: 10px;
 }
 
-#pievubimkm .gt_indent_3 {
+#ouoxaiyxdn .gt_indent_3 {
   text-indent: 15px;
 }
 
-#pievubimkm .gt_indent_4 {
+#ouoxaiyxdn .gt_indent_4 {
   text-indent: 20px;
 }
 
-#pievubimkm .gt_indent_5 {
+#ouoxaiyxdn .gt_indent_5 {
   text-indent: 25px;
 }
 
-#pievubimkm .katex-display {
+#ouoxaiyxdn .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#pievubimkm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ouoxaiyxdn div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
 
 <table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-</colgroup>
 <thead>
 <tr class="header gt_col_headings">
-<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
-<th id="stat_1" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Animal By-products</strong><br> N = 24<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_2" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Fruits</strong><br> N = 48<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_3" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Land Animals</strong><br> N = 40<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_4" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Legumes &amp; Grains</strong><br> N = 56<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_5" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Misc</strong><br> N = 24<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_6" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Nuts &amp; Seeds</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_7" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Oils</strong><br> N = 40<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_8" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Plant-based Alternatives</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_9" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Sugars</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_10" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Vegetables</strong><br> N = 48<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-<th id="stat_11" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Water Animals</strong><br> N = 16<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="a::stub" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="land" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Land use change</th>
+<th id="farm" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Farm</th>
+<th id="animal" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Animal feed</th>
+<th id="procesing" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Processing</th>
+<th id="transport" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Transport</th>
+<th id="retail" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Retail</th>
+<th id="pack" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Packaging</th>
+<th id="losses" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Losses</th>
 </tr>
 </thead>
 <tbody class="gt_table_body">
 <tr class="odd">
-<td class="gt_row gt_left" headers="label">category</td>
-<td class="gt_row gt_center" headers="stat_1"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_2"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_3"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_4"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_5"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_6"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_7"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_8"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_9"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_10"><br>
-</td>
-<td class="gt_row gt_center" headers="stat_11"><br>
-</td>
+<td id="stub_1_1" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Animal By-products</td>
+<td class="gt_row gt_right" headers="stub_1_1 land">1.90 (0.51, 4.47)</td>
+<td class="gt_row gt_right" headers="stub_1_1 farm">5.31 (1.32, 13.10)</td>
+<td class="gt_row gt_right" headers="stub_1_1 animal">1.60 (0.24, 2.35)</td>
+<td class="gt_row gt_right" headers="stub_1_1 procesing">0.30 (0.00, 0.74)</td>
+<td class="gt_row gt_right" headers="stub_1_1 transport">0.11 (0.08, 0.14)</td>
+<td class="gt_row gt_right" headers="stub_1_1 retail">0.21 (0.04, 0.33)</td>
+<td class="gt_row gt_right" headers="stub_1_1 pack">0.14 (0.10, 0.17)</td>
+<td class="gt_row gt_right" headers="stub_1_1 losses">1.00 (0.15, 2.58)</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;animal_feed</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_2" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Fruits</td>
+<td class="gt_row gt_right" headers="stub_1_2 land">0.05 (-0.06, 0.20)</td>
+<td class="gt_row gt_right" headers="stub_1_2 farm">0.43 (0.28, 0.59)</td>
+<td class="gt_row gt_right" headers="stub_1_2 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_2 procesing">0.02 (0.00, 0.03)</td>
+<td class="gt_row gt_right" headers="stub_1_2 transport">0.18 (0.12, 0.24)</td>
+<td class="gt_row gt_right" headers="stub_1_2 retail">0.02 (0.02, 0.02)</td>
+<td class="gt_row gt_right" headers="stub_1_2 pack">0.09 (0.05, 0.14)</td>
+<td class="gt_row gt_right" headers="stub_1_2 losses">0.27 (0.12, 0.42)</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;farm</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_3" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Land Animals</td>
+<td class="gt_row gt_right" headers="stub_1_3 land">6.18 (1.14, 14.77)</td>
+<td class="gt_row gt_right" headers="stub_1_3 farm">21.71 (6.05, 39.33)</td>
+<td class="gt_row gt_right" headers="stub_1_3 animal">3.24 (2.71, 3.82)</td>
+<td class="gt_row gt_right" headers="stub_1_3 procesing">1.18 (0.68, 1.65)</td>
+<td class="gt_row gt_right" headers="stub_1_3 transport">0.53 (0.45, 0.62)</td>
+<td class="gt_row gt_right" headers="stub_1_3 retail">0.26 (0.24, 0.28)</td>
+<td class="gt_row gt_right" headers="stub_1_3 pack">0.36 (0.32, 0.40)</td>
+<td class="gt_row gt_right" headers="stub_1_3 losses">5.46 (2.01, 10.18)</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;land_use</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_4" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Legumes &amp; Grains</td>
+<td class="gt_row gt_right" headers="stub_1_4 land">0.08 (0.00, 0.22)</td>
+<td class="gt_row gt_right" headers="stub_1_4 farm">1.28 (0.63, 2.08)</td>
+<td class="gt_row gt_right" headers="stub_1_4 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_4 procesing">0.08 (0.03, 0.13)</td>
+<td class="gt_row gt_right" headers="stub_1_4 transport">0.09 (0.07, 0.11)</td>
+<td class="gt_row gt_right" headers="stub_1_4 retail">0.08 (0.04, 0.14)</td>
+<td class="gt_row gt_right" headers="stub_1_4 pack">0.18 (0.08, 0.32)</td>
+<td class="gt_row gt_right" headers="stub_1_4 losses">0.24 (0.12, 0.37)</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;losses</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_5" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Misc</td>
+<td class="gt_row gt_right" headers="stub_1_5 land">9.86 (-0.06, 25.81)</td>
+<td class="gt_row gt_right" headers="stub_1_5 farm">6.02 (0.63, 10.75)</td>
+<td class="gt_row gt_right" headers="stub_1_5 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_5 procesing">0.36 (0.14, 0.61)</td>
+<td class="gt_row gt_right" headers="stub_1_5 transport">0.11 (0.09, 0.13)</td>
+<td class="gt_row gt_right" headers="stub_1_5 retail">0.04 (0.04, 0.05)</td>
+<td class="gt_row gt_right" headers="stub_1_5 pack">1.05 (0.72, 1.69)</td>
+<td class="gt_row gt_right" headers="stub_1_5 losses">8.20 (0.20, 12.94)</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;packaging</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_6" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Nuts &amp; Seeds</td>
+<td class="gt_row gt_right" headers="stub_1_6 land">-1.39 (-3.26, 0.49)</td>
+<td class="gt_row gt_right" headers="stub_1_6 farm">2.48 (1.58, 3.37)</td>
+<td class="gt_row gt_right" headers="stub_1_6 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_6 procesing">0.23 (0.05, 0.41)</td>
+<td class="gt_row gt_right" headers="stub_1_6 transport">0.12 (0.11, 0.13)</td>
+<td class="gt_row gt_right" headers="stub_1_6 retail">0.04 (0.04, 0.05)</td>
+<td class="gt_row gt_right" headers="stub_1_6 pack">0.12 (0.11, 0.12)</td>
+<td class="gt_row gt_right" headers="stub_1_6 losses">0.23 (-0.01, 0.47)</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;processing</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_7" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Oils</td>
+<td class="gt_row gt_right" headers="stub_1_7 land">1.12 (-0.04, 2.30)</td>
+<td class="gt_row gt_right" headers="stub_1_7 farm">2.22 (1.67, 2.99)</td>
+<td class="gt_row gt_right" headers="stub_1_7 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_7 procesing">0.47 (0.22, 0.82)</td>
+<td class="gt_row gt_right" headers="stub_1_7 transport">0.25 (0.18, 0.34)</td>
+<td class="gt_row gt_right" headers="stub_1_7 retail">0.04 (0.04, 0.04)</td>
+<td class="gt_row gt_right" headers="stub_1_7 pack">0.78 (0.76, 0.79)</td>
+<td class="gt_row gt_right" headers="stub_1_7 losses">0.41 (0.27, 0.56)</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;retail</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_8" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Plant-based Alternatives</td>
+<td class="gt_row gt_right" headers="stub_1_8 land">0.57 (0.18, 0.96)</td>
+<td class="gt_row gt_right" headers="stub_1_8 farm">0.29 (0.09, 0.49)</td>
+<td class="gt_row gt_right" headers="stub_1_8 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_8 procesing">0.48 (0.16, 0.79)</td>
+<td class="gt_row gt_right" headers="stub_1_8 transport">0.14 (0.11, 0.18)</td>
+<td class="gt_row gt_right" headers="stub_1_8 retail">0.27 (0.27, 0.27)</td>
+<td class="gt_row gt_right" headers="stub_1_8 pack">0.14 (0.10, 0.18)</td>
+<td class="gt_row gt_right" headers="stub_1_8 losses">0.18 (0.06, 0.29)</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;transport</td>
-<td class="gt_row gt_center" headers="stat_1">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_2">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_3">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_4">7 (13%)</td>
-<td class="gt_row gt_center" headers="stat_5">3 (13%)</td>
-<td class="gt_row gt_center" headers="stat_6">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_7">5 (13%)</td>
-<td class="gt_row gt_center" headers="stat_8">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_9">2 (13%)</td>
-<td class="gt_row gt_center" headers="stat_10">6 (13%)</td>
-<td class="gt_row gt_center" headers="stat_11">2 (13%)</td>
+<td id="stub_1_9" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Sugars</td>
+<td class="gt_row gt_right" headers="stub_1_9 land">0.63 (0.00, 1.26)</td>
+<td class="gt_row gt_right" headers="stub_1_9 farm">0.51 (0.49, 0.54)</td>
+<td class="gt_row gt_right" headers="stub_1_9 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_9 procesing">0.14 (0.04, 0.24)</td>
+<td class="gt_row gt_right" headers="stub_1_9 transport">0.71 (0.63, 0.79)</td>
+<td class="gt_row gt_right" headers="stub_1_9 retail">0.04 (0.04, 0.04)</td>
+<td class="gt_row gt_right" headers="stub_1_9 pack">0.09 (0.08, 0.09)</td>
+<td class="gt_row gt_right" headers="stub_1_9 losses">0.38 (0.28, 0.49)</td>
 </tr>
-</tbody><tfoot class="gt_footnotes">
 <tr class="even">
-<td colspan="12" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> n (%)</td>
+<td id="stub_1_10" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Vegetables</td>
+<td class="gt_row gt_right" headers="stub_1_10 land">0.10 (0.00, 0.30)</td>
+<td class="gt_row gt_right" headers="stub_1_10 farm">0.21 (0.18, 0.24)</td>
+<td class="gt_row gt_right" headers="stub_1_10 animal">0.00 (0.00, 0.00)</td>
+<td class="gt_row gt_right" headers="stub_1_10 procesing">0.01 (0.00, 0.03)</td>
+<td class="gt_row gt_right" headers="stub_1_10 transport">0.11 (0.09, 0.13)</td>
+<td class="gt_row gt_right" headers="stub_1_10 retail">0.03 (0.02, 0.04)</td>
+<td class="gt_row gt_right" headers="stub_1_10 pack">0.04 (0.04, 0.04)</td>
+<td class="gt_row gt_right" headers="stub_1_10 losses">0.12 (0.07, 0.21)</td>
 </tr>
-</tfoot>
-
+<tr class="odd">
+<td id="stub_1_11" class="gt_row gt_left gt_stub" data-quarto-table-cell-role="th" scope="row">Water Animals</td>
+<td class="gt_row gt_right" headers="stub_1_11 land">0.76 (0.33, 1.19)</td>
+<td class="gt_row gt_right" headers="stub_1_11 farm">10.76 (8.06, 13.45)</td>
+<td class="gt_row gt_right" headers="stub_1_11 animal">2.93 (1.83, 4.03)</td>
+<td class="gt_row gt_right" headers="stub_1_11 procesing">0.02 (0.00, 0.04)</td>
+<td class="gt_row gt_right" headers="stub_1_11 transport">0.29 (0.25, 0.33)</td>
+<td class="gt_row gt_right" headers="stub_1_11 retail">0.22 (0.09, 0.35)</td>
+<td class="gt_row gt_right" headers="stub_1_11 pack">0.34 (0.14, 0.54)</td>
+<td class="gt_row gt_right" headers="stub_1_11 losses">4.93 (2.03, 7.83)</td>
+</tr>
+</tbody>
 </table>
 
 </div>
