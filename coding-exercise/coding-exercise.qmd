@@ -12,7 +12,7 @@ library(dslabs) # contains data for analysis
 
 ```{r}
 # look at help file for gapminder data
-help(gapminder)
+#help(gapminder)
 
 # view data structure
 str(gapminder)
@@ -145,7 +145,7 @@ library(dplyr)
 
 ```{r}
 #view the help page of the data set to better understand the dataset.
-help("murders")
+#help("murders")
 
 #check the data.
 head(murders)
