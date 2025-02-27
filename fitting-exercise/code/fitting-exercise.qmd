@@ -1,0 +1,289 @@
+---
+title: "fitting-exercise"
+author: "Murphy John"
+format: html
+editor: visual
+---
+
+# Setup
+
+```{r}
+# load packages
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# load data
+dat <- read.csv(
+  here::here("fitting-exercise/data/Mavoglurant_A2121_nmpk.csv")
+  )
+
+names(dat) <- tolower(names(dat))
+```
+
+# Initial EDA
+
+```{r, fig.width=10, fig.height=5}
+# plot time by dv for each id, stratified by dose
+plot <- ggplot(dat) +
+  geom_line(aes(x=time, y=dv, group=id)) +
+  facet_wrap(~dose)
+
+print(plot)
+```
+
+# Initial processing
+
+```{r}
+# keep only obs where occ=1
+dat1 <- dat %>%
+  filter(occ == 1)
+```
+
+```{r}
+# exclude obs where time=0, sum dv for each id
+dat2 <- dat1 %>%
+  filter(time != 0) %>%
+  group_by(id) %>%
+  summarize(
+    Y = sum(dv)
+  )
+
+# create df with time=0 obs only
+dat3 <- dat1 %>%
+  filter(time == 0)
+
+# join by id
+dat4 <- full_join(x=dat2, y=dat3, by="id")
+```
+
+```{r}
+# convert race and sex to factors
+# keep only Y, dose, age, sex, race, wt, ht
+dat5 <- dat4 %>%
+  mutate(
+    race = factor(race),
+    sex = factor(sex)
+  ) %>%
+  select(
+    Y, dose, age, sex, race, wt, ht
+  )
+
+str(dat5)
+```
+
+# EDA
+
+```{r}
+# participant demographics by dose
+table1 <- dat5 %>%
+  gtsummary::tbl_summary(
+    include = c(age, sex, race, wt, ht),
+    by = dose
+  ) %>%
+  gtsummary::as_kable()
+
+print(table1)
+```
+
+```{r, fig.width=3, fig.height=3}
+# plot Y by dose
+plot1 <- ggplot(dat5) +
+  geom_boxplot(aes(x=factor(dose), y=Y))
+
+print(plot1)
+```
+
+Boxplot of dose by Y should 2 individuals of dose 25 with higher Y values, 1 individual od dose 50 with higher Y value.
+
+```{r, fig.width=3, fig.height=3}
+# plot Y by age
+plot2 <- ggplot(dat5) +
+  geom_point(aes(x=age, y=Y))
+
+print(plot2)
+```
+
+Scatterplot of age by Y appears randomly distributed.
+
+```{r, fig.width=3, fig.height=3}
+# plot Y by sex
+plot3 <- ggplot(dat5) +
+  geom_boxplot(aes(x=sex, y=Y))
+
+print(plot3)
+```
+
+Boxplot of sex by Y shows one individual of sex 1 and one individual of sex 2 with higher values of Y.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of Y
+hist1 <- ggplot(dat5) +
+  geom_histogram(aes(Y))
+
+print(hist1)
+```
+
+Histogram of Y is right-skewed with some high-value outliers.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of dose
+bar1 <- ggplot(dat5) +
+  geom_bar(aes(factor(dose)))
+
+print(bar1)
+```
+
+Bar plot of dose shows that more individuals recieve dose 25 or 50 than dose 37.5.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of age
+hist2 <- ggplot(dat5) +
+  geom_histogram(aes(age))
+
+print(hist2)
+```
+
+Histogram of age appears multimodal. Most individuals are either late-20s or late-30s.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of sex
+bar2 <- ggplot(dat5) +
+  geom_bar(aes(sex))
+
+print(bar2)
+```
+
+Bar plot of sex shows that most individuals are of sex 1.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of race
+bar3 <- ggplot(dat5) +
+  geom_bar(aes(race))
+
+print(bar3)
+```
+
+Bar plot of race shows that most individuals are of race 1. Some are of race 2 and few are of races 7 and 88.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of wt
+hist3 <- ggplot(dat5) +
+  geom_histogram(aes(wt))
+
+print(hist3)
+```
+
+Histogram of weight shows a normal distribution.
+
+```{r, fig.width=3, fig.height=3}
+# distribution of ht
+hist4 <- ggplot(dat5) +
+  geom_histogram(aes(ht))
+
+print(hist4)
+```
+
+Histogram of height shows normal to slightly left-skewed distribution.
+
+```{r, fig.width=3, fig.height=3}
+plot4 <- ggplot(dat5) +
+  geom_boxplot(aes(x=sex, y=wt))
+
+print(plot4)
+```
+
+Boxplot of sex by height shows that sex 1 has larger values for weight than sex 2
+
+```{r, fig.width=3, fig.height=3}
+plot5 <- ggplot(dat5) +
+  geom_boxplot(aes(x=sex, y=ht))
+
+print(plot5)
+```
+
+Boxplot of sex by height shows that sex 1 has larger values for height than sex 2
+
+```{r, fig.height=10, fig.width=10}
+# pair plot
+pairs(dat5)
+```
+
+Pair plot shows general relationships between variables. Y seems positively associated with dose. Weight and height show a positive linear relationship.
+
+# Model Fitting
+
+## linear models
+```{r}
+# linear model to Y using dose
+model1 <- parsnip::linear_reg()
+
+fit1 <- model1 %>%
+  parsnip::fit(Y ~ dose, data=dat5)
+
+parsnip::tidy(fit1)
+
+# predict Y
+fit1_pred <- predict(
+  fit1,
+  new_data=dat5
+)
+
+# combine real data with predictions
+fit1_result <- dat5 %>%
+  select(Y, dose) %>%
+  bind_cols(fit1_pred)
+
+# calculate rmse
+fit1_result %>%
+  yardstick::rmse(truth=Y, estimate=.pred)
+
+# calculate R squared
+fit1_result %>%
+  yardstick::rsq(truth=Y, estimate=.pred)
+```
+
+RMSE = 666 and R-squared = 0.516
+
+```{r}
+# linear model to Y using all predictors
+model2 <- parsnip::linear_reg()
+
+fit2 <- model2 %>%
+  parsnip::fit(Y ~ dose + age + sex + race + wt + ht, data=dat5)
+
+parsnip::tidy(fit2)
+
+# predict Y
+fit2_pred <- predict(
+  fit2,
+  new_data=dat5
+)
+
+# combine real data with predictions
+fit2_result <- dat5 %>%
+  select(Y, dose, age, sex, race, wt, ht) %>%
+  bind_cols(fit2_pred)
+
+# calculate rmse
+fit2_result %>%
+  yardstick::rmse(truth=Y, estimate=.pred)
+
+# calculate R squared
+fit2_result %>%
+  yardstick::rsq(truth=Y, estimate=.pred)
+```
+
+RMSE = 591 and R-squared = 0.619
+
+
+## logistic models
+
+
+
+
+
+
+
+

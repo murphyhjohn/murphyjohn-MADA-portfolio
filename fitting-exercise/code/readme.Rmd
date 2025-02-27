@@ -1,0 +1,3 @@
+# Code
+
+`fitting-exercise.qmd` contains all processing, eda, and analysis code

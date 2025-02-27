@@ -1,0 +1,10 @@
+# Data
+
+`Mavoglurant_A2121_nmpk.csv` contains the raw data. Data are processing in `fitting-exercise.qmd`. Final variables included in the cleaned data include:
+* `id`: a uniqie patient identifier
+* `dose`: dose of drug recived by patient
+* `age`: age of patient
+* `sex`: sex of patient. levels include "1" and "2". additional information not available.
+* `race`: race of patient. levels include "1", "2", "7", and "99". additional information not available.
+* `wt`: likely weight of patient but unverified. additional information of measurement not available.
+* `ht`: likely height of patient but unverified. additional information of measurement not available.

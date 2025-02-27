@@ -13,7 +13,7 @@ website:
           - text: "Data Analysis Exercise"
             file: cdcdata-exercise/code/cdcdata-exercise.qmd
           - text: "Fitting Exercise"
-            file: fitting-exercise/fitting-exercise.qmd
+            file: fitting-exercise/code/fitting-exercise.qmd
           - text: "Presentation Exercise"
             file: presentation-exercise/presentation-exercise.qmd
           - text: "R Coding Exercise"

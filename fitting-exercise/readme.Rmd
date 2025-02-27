@@ -1,0 +1,9 @@
+# Introduction
+
+This folder contains a simple model fitting exercise.
+
+## Description of Contents
+
+`data` contains the raw data file
+
+`code` contains all code run for this analysis
