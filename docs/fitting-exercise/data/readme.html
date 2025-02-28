@@ -152,13 +152,12 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<p>Place your various R or Quarto files in the appropriate folders.</p>
-<p>You can either have fewer large scripts, or multiple scripts that do only specific actions. Those can be R or Quarto files. In either case, document the scripts and what goes on in them so well that someone else (including future you) can easily figure out what is happening.</p>
-<p>The scripts should load the appropriate data (e.g.&nbsp;raw or processed), perform actions, and save results (e.g.&nbsp;processed data, figures, computed values) in the appropriate folders. Document somewhere what inputs each script takes and where output is placed.</p>
-<p>If scripts need to be run in a specific order, document this. Either as comments in the script, or in a separate text file such as this readme file. Ideally of course in both locations.</p>
-<p>Depending on your specific project, you might want to have further folders/sub-folders.</p>
+<section id="data" class="level1">
+<h1>Data</h1>
+<p><code>Mavoglurant_A2121_nmpk.csv</code> contains the raw data. Data are processing in <code>fitting-exercise.qmd</code>. Final variables included in the cleaned data include: * <code>id</code>: a uniqie patient identifier * <code>dose</code>: dose of drug recived by patient * <code>age</code>: age of patient * <code>sex</code>: sex of patient. levels include “1” and “2”. additional information not available. * <code>race</code>: race of patient. levels include “1”, “2”, “7”, and “99”. additional information not available. * <code>wt</code>: likely weight of patient but unverified. additional information of measurement not available. * <code>ht</code>: likely height of patient but unverified. additional information of measurement not available.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

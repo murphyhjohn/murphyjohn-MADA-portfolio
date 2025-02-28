@@ -215,14 +215,16 @@ Pair plot shows general relationships between variables. Y seems positively asso
 # Model Fitting
 
 ## linear models
+
 ```{r}
 # linear model to Y using dose
-model1 <- parsnip::linear_reg()
+fit1 <- parsnip::linear_reg() %>%
+  parsnip::fit(
+    Y ~ dose, 
+    data=dat5
+  )
 
-fit1 <- model1 %>%
-  parsnip::fit(Y ~ dose, data=dat5)
-
-parsnip::tidy(fit1)
+broom::tidy(fit1)
 
 # predict Y
 fit1_pred <- predict(
@@ -237,23 +239,30 @@ fit1_result <- dat5 %>%
 
 # calculate rmse
 fit1_result %>%
-  yardstick::rmse(truth=Y, estimate=.pred)
+  yardstick::rmse(
+    truth=Y, 
+    estimate=.pred
+  )
 
 # calculate R squared
 fit1_result %>%
-  yardstick::rsq(truth=Y, estimate=.pred)
+  yardstick::rsq(
+    truth=Y, 
+    estimate=.pred
+  )
 ```
 
 RMSE = 666 and R-squared = 0.516
 
 ```{r}
 # linear model to Y using all predictors
-model2 <- parsnip::linear_reg()
+fit2 <- parsnip::linear_reg() %>%
+  parsnip::fit(
+    Y ~ dose + age + sex + race + wt + ht, 
+    data=dat5
+  )
 
-fit2 <- model2 %>%
-  parsnip::fit(Y ~ dose + age + sex + race + wt + ht, data=dat5)
-
-parsnip::tidy(fit2)
+broom::tidy(fit2)
 
 # predict Y
 fit2_pred <- predict(
@@ -268,21 +277,118 @@ fit2_result <- dat5 %>%
 
 # calculate rmse
 fit2_result %>%
-  yardstick::rmse(truth=Y, estimate=.pred)
+  yardstick::rmse(
+    truth=Y, 
+    estimate=.pred
+  )
 
 # calculate R squared
 fit2_result %>%
-  yardstick::rsq(truth=Y, estimate=.pred)
+  yardstick::rsq(
+    truth=Y, 
+    estimate=.pred
+  )
 ```
 
 RMSE = 591 and R-squared = 0.619
 
+The full model, with all predictors included, has a lower RMSE, which indicated lower error, then the reduced model, with dose as the only predictor. The full model also has a higher R-squared value, indicating a better fit then the reduced model.
 
 ## logistic models
 
+```{r}
+# logistic model to sex using dose
+fit3 <- parsnip::logistic_reg() %>%
+  parsnip::fit(
+    sex ~ dose, 
+    data=dat5
+  )
 
+broom::tidy(fit3)
 
+# predict sex
+fit3_pred <- predict(
+  fit3,
+  new_data=dat5
+)
 
+# get prediction probabilities
+fit3_prob <- predict(
+  fit3,
+  new_data = dat5,
+  type = "prob"
+)
+
+# combine real data with predictions
+fit3_result <- dat5 %>%
+  select(sex, dose) %>%
+  bind_cols(fit3_pred, fit3_prob)
+
+# compute accuracy
+yardstick::accuracy(
+  fit3_result, 
+  truth = sex,
+  estimate = .pred_class
+)
+
+# compute ROC-AUC
+yardstick::roc_auc(
+  fit3_result, 
+  truth=sex, 
+  .pred_1
+)
+```
+
+The model classification accuracy is about 86.7%.
+
+The model has a ROC-AUC of 0.592 indicating predictive performance is low, just slightly better than random guessing.
+
+```{r}
+# logistic model to sex using all predictors
+fit4 <- parsnip::logistic_reg() %>%
+  parsnip::fit(
+    sex ~ Y + dose + age + race + wt + ht, 
+    data=dat5
+  )
+
+broom::tidy(fit4)
+
+# predict sex
+fit4_pred <- predict(
+  fit4,
+  new_data=dat5
+)
+
+# get prediction probabilities
+fit4_prob <- predict(
+  fit4,
+  new_data = dat5,
+  type = "prob"
+)
+
+# combine real data with predictions
+fit4_result <- dat5 %>%
+  select(sex, Y, dose, age, race, wt, ht) %>%
+  bind_cols(fit4_pred, fit4_prob)
+
+# compute accuracy
+yardstick::accuracy(
+  fit4_result, 
+  truth = sex,
+  estimate = .pred_class
+)
+
+# compute ROC-AUC
+yardstick::roc_auc(
+  fit4_result, 
+  truth=sex, 
+  .pred_1
+)
+```
+
+The model classification accuracy is about 94.7%.
+
+The model has a ROC-AUC of 0.980 indicating overall good predictive performance.
 
 
 
