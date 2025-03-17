@@ -5,7 +5,9 @@ format: html
 editor: visual
 ---
 
-# Setup
+# Exercise 1
+
+## Setup
 
 ```{r}
 # load packages
@@ -22,7 +24,7 @@ dat <- read.csv(
 names(dat) <- tolower(names(dat))
 ```
 
-# Initial EDA
+## Initial EDA
 
 ```{r, fig.width=10, fig.height=5}
 # plot time by dv for each id, stratified by dose
@@ -33,7 +35,7 @@ plot <- ggplot(dat) +
 print(plot)
 ```
 
-# Initial processing
+## Initial processing
 
 ```{r}
 # keep only obs where occ=1
@@ -73,7 +75,7 @@ dat5 <- dat4 %>%
 str(dat5)
 ```
 
-# EDA
+## EDA
 
 ```{r}
 # participant demographics by dose
@@ -212,9 +214,9 @@ pairs(dat5)
 
 Pair plot shows general relationships between variables. Y seems positively associated with dose. Weight and height show a positive linear relationship.
 
-# Model Fitting
+## Model Fitting
 
-## linear models
+### linear models
 
 ```{r}
 # linear model to Y using dose
@@ -294,7 +296,7 @@ RMSE = 591 and R-squared = 0.619
 
 The full model, with all predictors included, has a lower RMSE, which indicated lower error, then the reduced model, with dose as the only predictor. The full model also has a higher R-squared value, indicating a better fit then the reduced model.
 
-## logistic models
+### logistic models
 
 ```{r}
 # logistic model to sex using dose
@@ -390,6 +392,277 @@ The model classification accuracy is about 94.7%.
 
 The model has a ROC-AUC of 0.980 indicating overall good predictive performance.
 
+# Exercise 2
 
+## Setup
 
+```{r}
+# set seed
+rngseed = 1234
+```
 
+```{r}
+# remove race variable
+dat6 <- dat5 %>%
+  select(!race)
+```
+
+```{r}
+set.seed(rngseed)
+
+# put 75% of the data into the training set 
+data_split <- rsample::initial_split(dat6, prop = 3/4)
+
+# Create data frames for the two sets:
+train_data <- rsample::training(data_split)
+test_data  <- rsample::testing(data_split)
+```
+
+## Model Fitting
+
+### Part 1
+
+```{r}
+# linear model to Y using dose
+fit5 <- parsnip::linear_reg() %>%
+  parsnip::fit(
+    Y ~ dose, 
+    data=train_data
+  )
+
+broom::tidy(fit5)
+
+# predict Y
+fit5_pred <- predict(
+  fit5,
+  new_data=train_data
+)
+
+# combine real data with predictions
+fit5_result <- train_data %>%
+  select(Y, dose) %>%
+  bind_cols(fit5_pred)
+
+# calculate rmse
+fit5_result %>%
+  yardstick::rmse(
+    truth=Y, 
+    estimate=.pred
+  )
+
+# calculate R squared
+fit5_result %>%
+  yardstick::rsq(
+    truth=Y, 
+    estimate=.pred
+  )
+```
+
+RMSE = 703 and R-squared = 0.451
+
+```{r}
+# linear model to Y using all predictors
+fit6 <- parsnip::linear_reg() %>%
+  parsnip::fit(
+    Y ~ dose + age + sex + wt + ht, 
+    data=train_data
+  )
+
+broom::tidy(fit6)
+
+# predict Y
+fit6_pred <- predict(
+  fit6,
+  new_data=train_data
+)
+
+# combine real data with predictions
+fit6_result <- train_data %>%
+  select(Y, dose, age, sex, wt, ht) %>%
+  bind_cols(fit6_pred)
+
+# calculate rmse
+fit6_result %>%
+  yardstick::rmse(
+    truth=Y, 
+    estimate=.pred
+  )
+
+# calculate R squared
+fit6_result %>%
+  yardstick::rsq(
+    truth=Y, 
+    estimate=.pred
+  )
+```
+
+RMSE = 627 and R-squared = 0.562
+
+```{r}
+# compute rmse of null model
+
+null <- parsnip::null_model() %>%
+  parsnip::set_engine("parsnip") %>%
+  parsnip::set_mode("regression") %>%
+  parsnip::fit(Y ~ ., data = train_data)
+
+# predict Y
+null_pred <- predict(
+  null,
+  new_data=train_data
+)
+
+# combine real data with predictions
+null_result <- train_data %>%
+  select(Y) %>%
+  bind_cols(null_pred)
+
+# calculate rmse
+null_result %>%
+  yardstick::rmse(
+    truth=Y, 
+    estimate=.pred
+  )
+```
+
+RMSE = 948
+
+#### Results
+
+The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univarite models.
+
+### Part 2
+
+```{r}
+# setup
+
+# fit model with resampling
+set.seed(rngseed)
+
+# define linear model specification
+model_spec <- parsnip::linear_reg() %>% 
+  parsnip::set_engine("lm") %>% 
+  parsnip::set_mode("regression")
+
+# define null model specification
+null_spec <- parsnip::null_model() %>%
+  parsnip::set_engine("parsnip") %>%
+  parsnip::set_mode("regression")
+
+# create folds
+folds <- rsample::vfold_cv(train_data, v = 10)
+```
+
+```{r}
+# linear model to Y using dose
+fit_wf1 <- workflows::workflow() %>%
+  workflows::add_model(model_spec) %>%
+  workflows::add_formula(Y ~ dose)
+
+fit_rs1 <- fit_wf1 %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs1)
+```
+
+RMSE = 691, SE = 67.5; R-squared = 0.512, SE = 0.0592
+
+```{r}
+# linear model to Y using all predictors
+fit_wf2 <- workflows::workflow() %>%
+  workflows::add_model(model_spec) %>%
+  workflows::add_formula(Y ~ dose + age + sex + wt + ht)
+
+fit_rs2 <- fit_wf2 %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs2)
+```
+
+RMSE = 646, SE = 64.8; R-squared = 0.573, SE = 0.0686
+
+```{r}
+# null model
+fit_wf_null <- workflows::workflow() %>%
+  workflows::add_model(null_spec) %>%
+  workflows::add_formula(Y ~ .)
+
+fit_rs_null <- fit_wf_null %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs_null)
+```
+
+RMSE = 933, SE = 76.7
+
+#### Results
+
+The original RMSE value for the univariate model was 703, compared to the new value of 691. Using the cross-validation method to evaluate this model resulted in a better estimated fit. The standard error is 67.5, which is relatively large. This indicates that the RMSE varies considerably across folds, possibly suggesting an unstable model or high data variability.
+
+The original RMSE value for the full model was 627, compared to the new value of 646. Using the cross-validation method to evaluate this model resulted in a weaker estimated fit. The standard error is 64.8, which is relatively large. This indicates that the RMSE varies considerably across folds, possibly suggesting an unstable model or high data variability.
+
+The RMSE values for the null model are similar.
+
+### Changing the seed
+
+```{r}
+# setup
+
+# fit model with resampling
+set.seed(333)
+
+# define linear model specification
+model_spec <- parsnip::linear_reg() %>% 
+  parsnip::set_engine("lm") %>% 
+  parsnip::set_mode("regression")
+
+# define null model specification
+null_spec <- parsnip::null_model() %>%
+  parsnip::set_engine("parsnip") %>%
+  parsnip::set_mode("regression")
+
+# create folds
+folds <- rsample::vfold_cv(train_data, v = 10)
+```
+
+```{r}
+# linear model to Y using dose
+fit_wf1 <- workflows::workflow() %>%
+  workflows::add_model(model_spec) %>%
+  workflows::add_formula(Y ~ dose)
+
+fit_rs1 <- fit_wf1 %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs1)
+```
+
+RMSE = 706, SE = 48.1; R-squared = 0.484
+
+```{r}
+# linear model to Y using all predictors
+fit_wf2 <- workflows::workflow() %>%
+  workflows::add_model(model_spec) %>%
+  workflows::add_formula(Y ~ dose + age + sex + wt + ht)
+
+fit_rs2 <- fit_wf2 %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs2)
+```
+
+RMSE = 645, SE = 52.7; R-squared = 0.566, SE = 0.0619
+
+```{r}
+# null model
+fit_wf_null <- workflows::workflow() %>%
+  workflows::add_model(null_spec) %>%
+  workflows::add_formula(Y ~ .)
+
+fit_rs_null <- fit_wf_null %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rs_null)
+```
+
+RMSE = 936, SE = 69.1
