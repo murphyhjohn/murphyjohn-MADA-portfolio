@@ -966,7 +966,7 @@ Attaching package: 'dplyr'</code></pre>
 <p>RMSE = 948</p>
 <section id="results" class="level4">
 <h4 class="anchored" data-anchor-id="results">Results</h4>
-<p>The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univarite models.</p>
+<p>The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univariate models.</p>
 </section>
 </section>
 <section id="part-2" class="level3">
@@ -1138,7 +1138,7 @@ Attaching package: 'dplyr'</code></pre>
                standard deviation, resulting in a divide by 0 error. `NA` will be returned.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>There were issues with some computations   A: x4</code></pre>
+<pre><code>There were issues with some computations   A: x8</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>There were issues with some computations   A: x10</code></pre>
@@ -1156,8 +1156,12 @@ Attaching package: 'dplyr'</code></pre>
 </div>
 </div>
 <p>RMSE = 936, SE = 69.1</p>
+<section id="results-2" class="level4">
+<h4 class="anchored" data-anchor-id="results-2">Results</h4>
+<p>Changing the seed results in different RMSE and SE values. For the univariate model, the new RMSE = 706, SE = 48.1; compared to the previous RMSE = 691, SE = 67.5. Note that if we had originally used this seed, we would have concluded that using cross-validation increases the RMSE for this model. For the full model, the new RMSe = 645, SE = 52.7; compared to the previous RMSE = 646, SE = 64.8. For the null model, the new RMSE = 936, SE = 69.1; compared to the previous RMSE = 933, SE = 76.7.</p>
 
 
+</section>
 </section>
 </section>
 </section>

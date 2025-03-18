@@ -529,7 +529,7 @@ RMSE = 948
 
 #### Results
 
-The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univarite models.
+The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univariate models.
 
 ### Part 2
 
@@ -666,3 +666,7 @@ tune::collect_metrics(fit_rs_null)
 ```
 
 RMSE = 936, SE = 69.1
+
+#### Results
+
+Changing the seed results in different RMSE and SE values. For the univariate model, the new RMSE = 706, SE = 48.1; compared to the previous RMSE = 691, SE = 67.5. Note that if we had originally used this seed, we would have concluded that using cross-validation increases the RMSE for this model. For the full model, the new RMSe = 645, SE = 52.7; compared to the previous RMSE = 646, SE = 64.8. For the null model, the new RMSE = 936, SE = 69.1; compared to the previous RMSE = 933, SE = 76.7.
