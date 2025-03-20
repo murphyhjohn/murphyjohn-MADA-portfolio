@@ -13,6 +13,7 @@ editor: visual
 # load packages
 library(ggplot2)
 library(dplyr)
+library(gtsummary)
 ```
 
 ```{r}
@@ -670,3 +671,288 @@ RMSE = 936, SE = 69.1
 #### Results
 
 Changing the seed results in different RMSE and SE values. For the univariate model, the new RMSE = 706, SE = 48.1; compared to the previous RMSE = 691, SE = 67.5. Note that if we had originally used this seed, we would have concluded that using cross-validation increases the RMSE for this model. For the full model, the new RMSe = 645, SE = 52.7; compared to the previous RMSE = 646, SE = 64.8. For the null model, the new RMSE = 936, SE = 69.1; compared to the previous RMSE = 933, SE = 76.7.
+
+------------------------------------------------------------------------
+
+#Part 2 ##This section added by Shaun van den Hurk
+
+# Load necessary libraries
+
+```{r message=FALSE, warning=FALSE}
+library(tidymodels)  
+library(ggplot2)     
+library(dplyr)       
+library(tidyr) 
+library(skimr)
+```
+
+We will put the training data and predicted vales from the original models (no CV) into a data frame.
+
+```{r}
+#Fit Models on Full Training Data (Not Using CV)
+
+# Simple Model: Using dose only
+
+lm_simple <- linear_reg() %>%
+  set_engine("lm") %>%
+  set_mode("regression") %>%
+  fit(Y ~ dose, data = train_data)
+
+# Full Model: Using All Predictors
+lm_full <- linear_reg() %>%
+  set_engine("lm") %>%
+  set_mode("regression") %>%
+  fit(Y ~ ., data = train_data)
+
+# Null Model: Predicts the mean of Y for all observations
+null_spec <- null_model() %>%
+  set_engine("parsnip") %>%
+  set_mode("regression")
+
+null_fit <- null_spec %>%
+  fit(Y ~ 1, data = train_data)
+
+```
+
+
+Using the models to extract the observed and predicted values
+```{r}
+#Extract Observed & Predicted Values for Each Model
+#Get predictions for simple model
+pred_simple <- predict(lm_simple, new_data = train_data) %>%
+  bind_cols(train_data) %>%
+  mutate(model = "Simple Model")
+
+#Get predictions for full model
+pred_full <- predict(lm_full, new_data = train_data) %>%
+  bind_cols(train_data) %>%
+  mutate(model = "Full Model")
+
+#Get predictions for null model (mean prediction)
+pred_null <- predict(null_fit, new_data = train_data) %>%
+  bind_cols(train_data) %>%
+  mutate(model = "Null Model")
+
+#Combine Predictions into one dataframe
+df_pred <- bind_rows(pred_simple, pred_full, pred_null) %>%
+  select(Y, .pred, model)  # Keep observed values, predictions, and model label
+
+#Pritn the dataframe
+skim(df_pred)
+
+#Create a plot for visualization (using ggplot)
+ggplot(df_pred, aes(x = Y, y = .pred, color = model, shape = model)) +
+  geom_point(alpha = 0.7, size = 2) +  # Scatter plot 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +  # 45-degree line
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_y_continuous(limits = c(0, 5000)) +
+  labs(
+    title = "Observed vs. Predicted Values for Three Models",
+    x = "Observed Values",
+    y = "Predicted Values",
+    color = "Model",
+    shape = "Model"
+  ) +
+  theme_minimal() 
+
+```
+
+The three horizontal lines in the Simple Model that only included the Dose varible is likely owing to the fact that Dose only takes three values in the dataset (25, 37.5 and 50) as these were likely the only different increments tested. Thus we see the grouping in the predictions cause by these three groups.
+
+As stated, model 2 (the full model with all predictors) has the best performance and seems to sow some affinity towards the 45 degree line but not a close association and we see more values weighted to the lower left and not an even distribution.
+
+
+We will make a plot of the predicted vs the residuals (predicted-observed) for Model 2. 
+We will add a straight line at 0.
+
+```{r}
+
+# Compute residuals for the full model (Model 2)
+residuals_full <- predict(lm_full, new_data = train_data) %>%
+  bind_cols(train_data) %>%
+  mutate(residuals = .pred - Y)  #Compute residuals
+
+#Find maximum residual value to set symmetric y-axis limits
+max_resid <- max(abs(residuals_full$residuals))  #Get max absolute residual
+
+#Create Residual Plot
+ggplot(residuals_full, aes(x = .pred, y = residuals)) +
+  geom_point(alpha = 0.7, size = 2, color = "blue") +  #Scatter plot 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +  #Reference line at 0
+  scale_y_continuous(limits = c(-max_resid, max_resid)) +  #Symmetric y-axis limits
+  labs(
+    title = "Residual Plot for Full Model (Model 2)",
+    x = "Predicted Values",
+    y = "Residuals"
+  ) +
+  theme_minimal()  
+
+```
+
+We should see a general cloud of data with no real pattern for this. However that is not the case and we see some aggregation around the line (zero) and there are many negative numbers with higher values than the positive values.
+
+###Model predictions and uncertainty
+
+
+We are going to focus on model 2 going forward as it has better performance.
+
+We are going to use a bootstrap method to help us sample the data and fit the model to the data.
+We start by reseting the seed to 1234 and create 100 bootstraps using the training data. We will then fit the model to these bootstrap samples and make predictions from the model for the original training data.
+
+```{r}
+#Reset random seed for reproducibility - 1234
+set.seed(1234)
+
+#Create 100 bootstrap samples from training data
+boot_samples <- bootstraps(train_data, times = 100)  #Creates 100 bootstrap datasets from training data
+
+#Define a function to fit Model 2 and make predictions and to extract the training data from the bootstrap sample
+fit_and_predict <- function(split) {boot_train <- analysis(split)  #Extract training set from bootstrap sample
+  lm_boot <- linear_reg() %>%   #Fit the Full Model to the bootstrap training set
+    set_engine("lm") %>%
+    set_mode("regression") %>%
+    fit(Y ~ ., data = boot_train)
+  predict(lm_boot, new_data = train_data) %>% #Predict on original training data
+    pull(.pred)}  #Extract predicted values as a numeric vector
+
+
+boot_preds <- map(boot_samples$splits, fit_and_predict)  #Apply model to each bootstrap sample & store predictions
+
+#Convert list of predictions to data frame
+boot_pred_df <- as.data.frame(do.call(cbind, boot_preds))
+colnames(boot_pred_df) <- paste0("boot_", seq(1, length(boot_preds)))  #Label columns
+
+#Add original observed values for reference
+boot_pred_df <- bind_cols(train_data %>% select(Y), boot_pred_df)
+
+#Print a preview of the bootstrap predictions
+print("First few rows of bootstrap predictions:")
+print(head(boot_pred_df))
+
+```
+
+
+Above we see a preview of the bootstrap predictions that we modeled.
+
+
+We will now calculate the mean, median and confidence intervals for the bootstrap predictions and generate a dataframe with this and provide a summary/overview of this dataframe of these values combined with Y (observed vaues).
+```{r}
+#Convert list of predictions to a matrix (for easier calculations)
+pred_matrix <- do.call(cbind, boot_preds)  #convert list to a matrix
+colnames(pred_matrix) <- paste0("boot_", seq(1, ncol(pred_matrix)))  #label columns
+
+#Compute Mean, Median & 89% Confidence Intervals
+preds <- pred_matrix %>% apply(1, function(x) {c(Mean_Prediction = mean(x), quantile(x, c(0.055, 0.5, 0.945)))}) %>%
+  t()  #Transpose to align columns correctly
+
+#Convert to dataframe and add `Y` 
+pred_summary <- as.data.frame(preds) %>% rename(Mean_Prediction = `Mean_Prediction`,
+    CI_Lower_89 = `5.5%`,
+    Median_Prediction = `50%`,
+    CI_Upper_89 = `94.5%`) %>%
+  mutate(Y = train_data$Y)  
+
+#We will verify this step because differences in size will cause failure in the following steps
+#Verify data structure to ensure correct fix
+print(paste("Size of train_data:", nrow(train_data)))  #Should be 90
+print(paste("Size of pred_summary:", nrow(pred_summary)))  #Should also be 90
+
+print("First few rows of bootstrap prediction summary with Y:")
+print(head(pred_summary))
+str(pred_summary)  
+
+```
+We will now geenrate a plot to visualise the data. We want to evaluate the  observed values, the point estimates and the calcuated statistics from the bootstrap predictions.
+We plot the Observed vs Predicted values wirh bootstrap confidence intervals, mean and median statistics.
+
+```{r}
+
+#Get Original point estimate from the full model (Model 2)
+point_estimates <- predict(lm_full, new_data = train_data) %>%
+  bind_cols(train_data) %>% rename(Point_Estimate = .pred)  #Rename prediction column
+
+#Use left_join() to ensure correct data alignment matched based on Y
+pred_plot_data <- point_estimates %>% left_join(pred_summary, by = "Y") %>% select(Y, Point_Estimate, Median_Prediction, CI_Lower_89, CI_Upper_89)  
+
+#Create plot for visualization
+ggplot(pred_plot_data) +
+  #black dots for original point estimates
+  geom_point(aes(x = Y, y = Point_Estimate), color = "black", size = 2, alpha = 0.8) +
+    # Blue dots for bootstrap median predictions
+  geom_point(aes(x = Y, y = Median_Prediction), color = "blue", size = 2, alpha = 0.7) +
+    # Red dots for lower bound of 89% confidence interval
+  geom_point(aes(x = Y, y = CI_Lower_89), color = "red", size = 2, alpha = 0.5) +
+    # Green dots for upper bound of 89% confidence interval
+  geom_point(aes(x = Y, y = CI_Upper_89), color = "green", size = 2, alpha = 0.5) +
+    # Add a 45-degree line (ideal case where predicted = observed)
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+    # Ensure x and y axes match for comparison
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_y_continuous(limits = c(0, 5000)) +
+    # Labels and theme
+  labs(title = "Observed vs. Predicted Values with Bootstrap Confidence Intervals",
+    x = "Observed Values", y = "Predicted Values", color = "Prediction Type") + theme_minimal() 
+
+```
+
+It is hard to distinguish all of the different points without a legend and to see some of the colours.
+So the same plot will be generated using different symbols and providing a legend.
+
+```{r}
+#Get original point estimate from the full model (Model 2)
+point_estimates <- predict(lm_full, new_data = train_data) %>%
+  bind_cols(train_data) %>% rename(Point_Estimate = .pred)  #Rename prediction column
+
+#Ensure Correct data alignment Using left_join()
+pred_plot_data <- point_estimates %>% left_join(pred_summary, by = "Y") %>% select(
+    Y,                  #Observed values 
+    Point_Estimate,     #Original model predictions
+    Mean_Prediction,    #Mean bootstrap prediction
+    Median_Prediction,  #Median bootstrap prediction
+    CI_Lower_89,        #Lower 89% confidence interval
+    CI_Upper_89)         #Upper 89% confidence interval
+
+ggplot(pred_plot_data, aes(x = Y)) +
+  # Black dots for original point estimates (Model 2 predictions)
+  geom_point(aes(y = Point_Estimate, color = "Point Estimate", shape = "Point Estimate"), size = 2, alpha = 0.8) +
+    # Purple dots for mean bootstrap prediction
+  geom_point(aes(y = Mean_Prediction, color = "Mean Prediction", shape = "Mean Prediction"), size = 2, alpha = 0.7) +
+  # Blue dots for bootstrap median predictions
+  geom_point(aes(y = Median_Prediction, color = "Median Prediction", shape = "Median Prediction"), size = 2, alpha = 0.7) +
+  # Red dots for lower bound of 89% confidence interval
+  geom_point(aes(y = CI_Lower_89, color = "CI Lower Bound", shape = "CI Lower Bound"), size = 2, alpha = 0.5) +
+  # Green dots for upper bound of 89% confidence interval
+  geom_point(aes(y = CI_Upper_89, color = "CI Upper Bound", shape = "CI Upper Bound"), size = 2, alpha = 0.5) +
+  # Add a 45-degree line (ideal case where predicted = observed)
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_y_continuous(limits = c(0, 5000)) +
+  # Manually define colors and shapes with proper legend
+  scale_color_manual(name = "Prediction Type", values = c(
+      "Point Estimate" = "black",
+      "Mean Prediction" = "purple",
+      "Median Prediction" = "blue",
+      "CI Lower Bound" = "red",
+      "CI Upper Bound" = "green")) +
+  scale_shape_manual(name = "Prediction Type", values = c(
+      "Point Estimate" = 16,
+      "Mean Prediction" = 17,
+      "Median Prediction" = 18,
+      "CI Lower Bound" = 3,
+      "CI Upper Bound" = 3 )) +
+  # Labels and theme
+  labs(title = "Observed vs. Predicted Values with Bootstrap Confidence Intervals", x = "Observed Values (Y)",
+    y = "Predicted Values") + theme_minimal()
+
+```
+
+
+Model 2 seems to capture the trend of observed vs predicted (the 45% line) quite well although not perfectly. The values from the bootstrap sampling median and mean demonstrate a similar pattern and so that shows the bootstrap sampling did not significantly shift the trend.
+The confidence intervals also follow this general tredn and are quite close which might indicate that the models predictions are quite stable in many cases (although the gap increases in some areas).
+
+
+----------------------------------------------------------------------
+
+
+
+
