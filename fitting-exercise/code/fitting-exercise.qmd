@@ -1,7 +1,9 @@
 ---
 title: "fitting-exercise"
 author: "Murphy John"
-format: html
+format: 
+  html:
+      toc: true
 editor: visual
 ---
 
@@ -395,7 +397,9 @@ The model has a ROC-AUC of 0.980 indicating overall good predictive performance.
 
 # Exercise 2
 
-## Setup
+## Part 1
+
+### Setup
 
 ```{r}
 # set seed
@@ -419,9 +423,9 @@ train_data <- rsample::training(data_split)
 test_data  <- rsample::testing(data_split)
 ```
 
-## Model Fitting
+### Model Fitting
 
-### Part 1
+#### Part 1
 
 ```{r}
 # linear model to Y using dose
@@ -528,11 +532,11 @@ null_result %>%
 
 RMSE = 948
 
-#### Results
+##### Results
 
-The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univariate models.
+The RMSE of the full model is the lowest, at 627. This indicates that the full model is predicting values closer to the actual data than both the null and univariable models.
 
-### Part 2
+#### Part 2
 
 ```{r}
 # setup
@@ -596,15 +600,15 @@ tune::collect_metrics(fit_rs_null)
 
 RMSE = 933, SE = 76.7
 
-#### Results
+##### Results
 
-The original RMSE value for the univariate model was 703, compared to the new value of 691. Using the cross-validation method to evaluate this model resulted in a better estimated fit. The standard error is 67.5, which is relatively large. This indicates that the RMSE varies considerably across folds, possibly suggesting an unstable model or high data variability.
+The original RMSE value for the univariable model was 703, compared to the new value of 691. Using the cross-validation method to evaluate this model resulted in a better estimated fit. The standard error is 67.5, which is relatively large. This indicates that the RMSE varies considerably across folds, possibly suggesting an unstable model or high data variability.
 
 The original RMSE value for the full model was 627, compared to the new value of 646. Using the cross-validation method to evaluate this model resulted in a weaker estimated fit. The standard error is 64.8, which is relatively large. This indicates that the RMSE varies considerably across folds, possibly suggesting an unstable model or high data variability.
 
 The RMSE values for the null model are similar.
 
-### Changing the seed
+#### Changing the seed
 
 ```{r}
 # setup
@@ -668,15 +672,17 @@ tune::collect_metrics(fit_rs_null)
 
 RMSE = 936, SE = 69.1
 
-#### Results
+##### Results
 
-Changing the seed results in different RMSE and SE values. For the univariate model, the new RMSE = 706, SE = 48.1; compared to the previous RMSE = 691, SE = 67.5. Note that if we had originally used this seed, we would have concluded that using cross-validation increases the RMSE for this model. For the full model, the new RMSe = 645, SE = 52.7; compared to the previous RMSE = 646, SE = 64.8. For the null model, the new RMSE = 936, SE = 69.1; compared to the previous RMSE = 933, SE = 76.7.
+Changing the seed results in different RMSE and SE values. For the univariable model, the new RMSE = 706, SE = 48.1; compared to the previous RMSE = 691, SE = 67.5. Note that if we had originally used this seed, we would have concluded that using cross-validation increases the RMSE for this model. For the full model, the new RMSe = 645, SE = 52.7; compared to the previous RMSE = 646, SE = 64.8. For the null model, the new RMSE = 936, SE = 69.1; compared to the previous RMSE = 933, SE = 76.7.
 
 ------------------------------------------------------------------------
 
-#Part 2 ##This section added by Shaun van den Hurk
+## Part 2 
 
-# Load necessary libraries
+### This section added by Shaun van den Hurk
+
+### Load necessary libraries
 
 ```{r message=FALSE, warning=FALSE}
 library(tidymodels)  
@@ -791,7 +797,7 @@ ggplot(residuals_full, aes(x = .pred, y = residuals)) +
 
 We should see a general cloud of data with no real pattern for this. However that is not the case and we see some aggregation around the line (zero) and there are many negative numbers with higher values than the positive values.
 
-###Model predictions and uncertainty
+### Model predictions and uncertainty
 
 
 We are going to focus on model 2 going forward as it has better performance.
@@ -953,6 +959,40 @@ The confidence intervals also follow this general tredn and are quite close whic
 
 ----------------------------------------------------------------------
 
+## Part 3
 
+### Final evaluation using test data
 
+```{r}
+# use model 2 to predict for test data
+pred_test <- predict(
+  fit6,
+  new_data=test_data
+)
 
+# combine real data with predictions
+test_result <- test_data %>%
+  select(Y, dose, age, sex, wt, ht) %>%
+  bind_cols(pred_test)
+```
+
+```{r}
+# plot predicted vs observed for both training data and test data
+ggplot() +
+  geom_point(data=fit6_result, aes(x=Y, y=.pred, color="Train Data")) +
+  geom_point(data=test_result, aes(x=Y, y=.pred, color="Test Data")) +
+  geom_abline(slope = 1, intercept = 0) +
+  scale_x_continuous(limits=c(0,5700)) +
+  scale_y_continuous(limits=c(0,5700)) +
+  scale_color_manual(values = c("Train Data" = "black", "Test Data" = "coral3"), name="Dataset")
+```
+
+#### Results
+
+Based on the metrics, the multivariable model performs better than the null model. The RMSE of the full model is 627, with an R-squared of 0.562, which is an improvement over the null model’s RMSE of 948. A smaller RMSE indicates that the full model predicts values closer to the actual data than the null model. The R-squared value means that the full model explains 56.2% of the variation in the data beyond what the null model accounts for.
+
+The univariable model with dose also performs better than the null model, with an RMSE of 706 and an R-squared value of 0.451. Compared to the null model, the smaller RMSE suggests that the univariable model predicts values closer to the actual data. The R-squared value indicates that the univariable model explains 45.1% of the variation in the data beyond the null model. The univariable model is useful for quantifying and visually representing the effect of dose on the outcome. However, beyond this, its practicality may be limited, as the full model demonstrates that in real data, factors beyond dose influence the outcome.
+
+Comparing the metrics of the multivariable and univariable models shows that the multivariable model has a smaller RMSE and a larger R-squared. This suggests that the full model predicts values more accurately than the univariable model and explains more of the variation in the data beyond the null model. This result aligns with the general expectation that as the number of predictors in a model increases, so does the model’s fit.
+
+Importantly, using train and test datasets reveals that the full model does not appear to be overfitting the training data. This is a crucial feature to assess when evaluating the practicality of a model. If one aims to determine an appropriate drug dose for an individual based on their characteristics, the full model could be useful in practice.
