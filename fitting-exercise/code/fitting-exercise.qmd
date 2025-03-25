@@ -76,6 +76,9 @@ dat5 <- dat4 %>%
   )
 
 str(dat5)
+
+# save as rds
+saveRDS(dat5, here::here("fitting-exercise/data/mavoglurant-processed.rds"))
 ```
 
 ## EDA
