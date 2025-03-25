@@ -1,0 +1,26 @@
+---
+title: "ml-models-exercise"
+author: "Murphy John"
+editor: visual
+---
+
+# Setup
+
+```{r}
+# load packages
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+# set seed
+rdmseed <- 1234
+set.seed(rdmseed)
+```
+
+# Data processing
+
+```{r}
+
+```
+
