@@ -14,6 +14,8 @@ website:
             file: cdcdata-exercise/code/cdcdata-exercise.qmd
           - text: "Fitting Exercise"
             file: fitting-exercise/code/fitting-exercise.qmd
+          - text: "Machine Learning Exercise"
+            file: ml-models-exercise/ml-models-exercise.qmd          
           - text: "Presentation Exercise"
             file: presentation-exercise/presentation-exercise.qmd
           - text: "R Coding Exercise"

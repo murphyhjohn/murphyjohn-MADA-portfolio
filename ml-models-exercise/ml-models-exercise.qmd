@@ -92,26 +92,48 @@ set.seed(rdmseed)
 ## linear model
 
 ```{r}
-fit1 <- linear_reg() %>%
+# fit model
+linear_mod <- linear_reg() %>%
   fit(
     Y ~ dose + age + sex + race_recode + bmi, 
     data=dat
     )
+
+# generate predictions
+linear_pred <- predict(linear_mod, new_data=dat)
+
+# merge predictions to data
+dat$pred_linear <- linear_pred$.pred
+```
+
+```{r}
+# get rmse
+dat %>%
+  rmse(truth = Y, estimate = pred_linear)
+```
+
+RMSE of the linear model is 624.
+
+```{r}
+# plot observed vs fitted
+ggplot(dat) +
+  geom_point(aes(x=Y, y=pred_linear)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  scale_x_continuous(limits=c(0,6000)) +
+  scale_y_continuous(limits=c(0,4000))
 ```
 
 ## lasso regression
 
 ```{r}
-# add an index row to data
-dat$id <- seq.int(nrow(dat))
+# set seed
+set.seed(rdmseed)
 
-# recipe not yet trained on data
+# recipe
 dat_rec <- recipe(
   Y ~ dose + age + sex + race_recode + bmi,
   data=dat
   ) %>%
-  #update_role(dat$id, new_role = "ID") %>%
-  # normalize numeric variables
   step_normalize(all_numeric(), -all_outcomes())
 
 # specify and fit models
@@ -125,8 +147,68 @@ lasso_fit <- wf %>%
   add_model(lasso_spec) %>%
   fit(data=dat)
 
-lasso_fit %>%
-  extract_fit_parsnip() %>%
-  tidy()
+# generate predictions
+lasso_pred <- predict(lasso_fit, new_data = dat)
+
+# merge predictions to data
+dat$pred_lasso <- lasso_pred$.pred
+
+# check variable selection
+lasso_fit %>% extract_fit_parsnip() %>% tidy()
 ```
 
+```{r}
+# get rmse
+dat %>%
+  rmse(truth = Y, estimate = pred_lasso)
+```
+
+RMSE of the lasso regression is 624. The lasso regression and the full linear model produce almost identical predictions. The lasso penalty of 0.1 is pretty small, so it likely isn't shrinking the coefficients much. Based on the lasso variable selection, `sex` is the only variable with a coefficient of zero. This means that the model is behaving similarly to the full linear model.
+
+```{r}
+# plot observed vs fitted
+ggplot(dat) +
+  geom_point(aes(x=Y, y=pred_lasso)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  scale_x_continuous(limits=c(0,6000)) +
+  scale_y_continuous(limits=c(0,4000))
+```
+
+## random forest
+
+```{r}
+# set seed
+set.seed(rdmseed)
+
+# specify and fit models
+rf_spec <- 
+    rand_forest() %>% 
+    set_mode("regression") %>% 
+    set_engine("ranger", seed = rdmseed)
+
+rf_fit <- rf_spec %>%
+  fit(Y ~ dose + age + sex + race_recode + bmi, data=dat)
+
+# generate predictions
+rf_pred <- predict(rf_fit, dat)
+
+# merge predictions to data
+dat$pred_rf <- rf_pred$.pred
+```
+
+```{r}
+# get rmse
+dat %>%
+  rmse(truth = Y, estimate = pred_rf)
+```
+
+RMSE of the random forest is 416 (361 when also including ht and wt).
+
+```{r}
+# plot observed vs fitted
+ggplot(dat) +
+  geom_point(aes(x=Y, y=pred_rf)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  scale_x_continuous(limits=c(0,6000)) +
+  scale_y_continuous(limits=c(0,4000))
+```
