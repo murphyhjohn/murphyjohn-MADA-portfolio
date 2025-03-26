@@ -681,7 +681,7 @@ Changing the seed results in different RMSE and SE values. For the univariable m
 
 ------------------------------------------------------------------------
 
-## Part 2 
+## Part 2
 
 ### This section added by Shaun van den Hurk
 
@@ -723,8 +723,8 @@ null_fit <- null_spec %>%
 
 ```
 
-
 Using the models to extract the observed and predicted values
+
 ```{r}
 #Extract Observed & Predicted Values for Each Model
 #Get predictions for simple model
@@ -770,9 +770,7 @@ The three horizontal lines in the Simple Model that only included the Dose varib
 
 As stated, model 2 (the full model with all predictors) has the best performance and seems to sow some affinity towards the 45 degree line but not a close association and we see more values weighted to the lower left and not an even distribution.
 
-
-We will make a plot of the predicted vs the residuals (predicted-observed) for Model 2. 
-We will add a straight line at 0.
+We will make a plot of the predicted vs the residuals (predicted-observed) for Model 2. We will add a straight line at 0.
 
 ```{r}
 
@@ -802,11 +800,9 @@ We should see a general cloud of data with no real pattern for this. However tha
 
 ### Model predictions and uncertainty
 
-
 We are going to focus on model 2 going forward as it has better performance.
 
-We are going to use a bootstrap method to help us sample the data and fit the model to the data.
-We start by reseting the seed to 1234 and create 100 bootstraps using the training data. We will then fit the model to these bootstrap samples and make predictions from the model for the original training data.
+We are going to use a bootstrap method to help us sample the data and fit the model to the data. We start by reseting the seed to 1234 and create 100 bootstraps using the training data. We will then fit the model to these bootstrap samples and make predictions from the model for the original training data.
 
 ```{r}
 #Reset random seed for reproducibility - 1234
@@ -840,11 +836,10 @@ print(head(boot_pred_df))
 
 ```
 
-
 Above we see a preview of the bootstrap predictions that we modeled.
 
-
 We will now calculate the mean, median and confidence intervals for the bootstrap predictions and generate a dataframe with this and provide a summary/overview of this dataframe of these values combined with Y (observed vaues).
+
 ```{r}
 #Convert list of predictions to a matrix (for easier calculations)
 pred_matrix <- do.call(cbind, boot_preds)  #convert list to a matrix
@@ -871,8 +866,8 @@ print(head(pred_summary))
 str(pred_summary)  
 
 ```
-We will now geenrate a plot to visualise the data. We want to evaluate the  observed values, the point estimates and the calcuated statistics from the bootstrap predictions.
-We plot the Observed vs Predicted values wirh bootstrap confidence intervals, mean and median statistics.
+
+We will now geenrate a plot to visualise the data. We want to evaluate the observed values, the point estimates and the calcuated statistics from the bootstrap predictions. We plot the Observed vs Predicted values wirh bootstrap confidence intervals, mean and median statistics.
 
 ```{r}
 
@@ -904,8 +899,7 @@ ggplot(pred_plot_data) +
 
 ```
 
-It is hard to distinguish all of the different points without a legend and to see some of the colours.
-So the same plot will be generated using different symbols and providing a legend.
+It is hard to distinguish all of the different points without a legend and to see some of the colours. So the same plot will be generated using different symbols and providing a legend.
 
 ```{r}
 #Get original point estimate from the full model (Model 2)
@@ -955,12 +949,9 @@ ggplot(pred_plot_data, aes(x = Y)) +
 
 ```
 
+Model 2 seems to capture the trend of observed vs predicted (the 45% line) quite well although not perfectly. The values from the bootstrap sampling median and mean demonstrate a similar pattern and so that shows the bootstrap sampling did not significantly shift the trend. The confidence intervals also follow this general tredn and are quite close which might indicate that the models predictions are quite stable in many cases (although the gap increases in some areas).
 
-Model 2 seems to capture the trend of observed vs predicted (the 45% line) quite well although not perfectly. The values from the bootstrap sampling median and mean demonstrate a similar pattern and so that shows the bootstrap sampling did not significantly shift the trend.
-The confidence intervals also follow this general tredn and are quite close which might indicate that the models predictions are quite stable in many cases (although the gap increases in some areas).
-
-
-----------------------------------------------------------------------
+------------------------------------------------------------------------
 
 ## Part 3
 

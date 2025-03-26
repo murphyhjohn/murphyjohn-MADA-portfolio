@@ -10,6 +10,7 @@ editor: visual
 # load packages
 library(dplyr)
 library(ggplot2)
+library(tidymodels)
 ```
 
 ```{r}
@@ -18,9 +19,114 @@ rdmseed <- 1234
 set.seed(rdmseed)
 ```
 
+```{r}
+# load data 
+dat <- readRDS(here::here("fitting-exercise/data/mavoglurant-processed.rds"))
+
+## make sex and race numeric
+dat$sex <- as.numeric(dat$sex)
+dat$race <- as.numeric(dat$race)
+```
+
 # Data processing
 
-```{r}
+To find out what the values used to encode race stand for, I searched the provided manuscript. In the Clinical data subsection of Methods, the authors write "The IV data used to optimize the disposition model (Study 1) were previously described by Wendling et al". I opened the article that was referenced and located the Table 1 which described the data. The data that we are using is called, in this reference, Study A2121. The race variable distribution is reported as Caucasian (61.7), Black (30), Native American (1.7) and Other (6.7). We can cross-reference these percentages with our data (see below) and see that 1=Caucasian, 2=Black, 7=Native American, and 88=Other.
 
+```{r}
+prop.table(table(x=dat$race))
+```
+
+```{r}
+# combine categories 7 and 88 of the race variable
+dat$race_recode <- case_when(
+  dat$race %in% c(7, 88) ~ 3,
+  TRUE ~ as.numeric(dat$race)
+)
+```
+
+# EDA
+
+```{r}
+# get continuous variables
+cor <- cor(dat %>% select(Y,age,wt,ht))
+
+# correlation plot
+corrplot::corrplot(cor, method='number')
+```
+
+# Feature engineering
+
+```{r}
+# determine units of wt and ht
+summary(dat$wt)
+## median weight is 82.1, min is 56.6, max is 115.3
+## it seems logical to assume wt is measured in kg
+## the Table 1 of the reference mentioned previously, reports weight in 
+## kg with median (range) 82.8 (56.6–115.3) which matches
+
+summary(dat$ht)
+## median height is 1.77, min is 1.52, max is 1.93
+## it seems logical to assume ht is measured in meters
+## the Table 1 of the reference mentioned previously does not report height,
+## but it does report bmi. we can compute bmi based on our confirmed weight
+## measurments and our assumed height measurements and see if we get similar
+## values for bmi
+
+# create bmi variable
+dat$bmi <- dat$wt / (dat$ht)^2
+
+# summarize new bmi variable
+summary(dat$bmi)
+## the median bmi of our created variable is 26.38, min is 18.69, max is 32.21
+## the median (range) of the bmi variable reported in the reference Table 1 is
+## 26.5 (18.7–32.2). Thus, our calculation is consistent with the reference
+```
+
+# Model building
+
+```{r}
+# set seed
+set.seed(rdmseed)
+```
+
+## linear model
+
+```{r}
+fit1 <- linear_reg() %>%
+  fit(
+    Y ~ dose + age + sex + race_recode + bmi, 
+    data=dat
+    )
+```
+
+## lasso regression
+
+```{r}
+# add an index row to data
+dat$id <- seq.int(nrow(dat))
+
+# recipe not yet trained on data
+dat_rec <- recipe(
+  Y ~ dose + age + sex + race_recode + bmi,
+  data=dat
+  ) %>%
+  #update_role(dat$id, new_role = "ID") %>%
+  # normalize numeric variables
+  step_normalize(all_numeric(), -all_outcomes())
+
+# specify and fit models
+lasso_spec <- linear_reg(penalty = 0.1, mixture = 1) %>%
+  set_engine("glmnet")
+
+wf <- workflow() %>%
+  add_recipe(dat_rec) 
+
+lasso_fit <- wf %>%
+  add_model(lasso_spec) %>%
+  fit(data=dat)
+
+lasso_fit %>%
+  extract_fit_parsnip() %>%
+  tidy()
 ```
 
