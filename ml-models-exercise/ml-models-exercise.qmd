@@ -212,3 +212,76 @@ ggplot(dat) +
   scale_x_continuous(limits=c(0,6000)) +
   scale_y_continuous(limits=c(0,4000))
 ```
+
+# Tuning the models
+
+## lasso tuning
+
+```{r}
+set.seed(rdmseed)
+
+tune_lasso_grid <- tibble(penalty = 10^seq(-5, 2, length.out = 50))
+
+tune_lasso_spec <- linear_reg(penalty = tune()) %>%
+  set_engine("glmnet")
+
+tune_rec <- recipe(Y ~ dose + age + sex + race_recode + bmi, data = dat)
+
+tune_lasso_wf <- workflow() %>%
+  add_model(tune_lasso_spec) %>%
+  add_recipe(tune_rec)
+```
+
+```{r}
+lasso_tune_results <- tune_grid(
+  tune_lasso_wf,
+  resamples = apparent(dat),
+  grid = tune_lasso_grid,
+  metrics=metric_set(yardstick::rmse)
+)
+
+lasso_tune_results_metrics <- as.data.frame(lasso_tune_results$.metrics)
+```
+
+```{r}
+ggplot(lasso_tune_results_metrics, aes(penalty, y = .estimate)) +
+  geom_line(size=1) +
+  scale_x_log10()
+```
+
+## rf tuning
+
+```{r}
+tune_rf_grid <- grid_regular(
+  mtry(range = c(1, 7)),
+  min_n(range = c(1, 21)),
+  levels = 7
+  )
+
+tune_rf_spec <- rand_forest(
+  mtry=tune(), 
+  min_n=tune(), 
+  trees=300
+  ) %>% 
+  set_mode("regression") %>%
+  set_engine("ranger", seed=rdmseed) 
+
+tune_rf_wf <- workflow() %>% add_model(tune_rf_spec) %>% add_recipe(tune_rec)
+```
+
+```{r}
+rf_tune_result <- tune_rf_wf %>% 
+  tune_grid(
+    resamples=apparent(dat), 
+    grid=tune_rf_grid, 
+    metrics=metric_set(yardstick::rmse)
+    )
+
+rf_tune_result_metrics <- as.data.frame(rf_tune_result$.metrics)
+```
+
+```{r}
+ggplot(rf_tune_result_metrics, aes(x=mtry, y = min_n, fill = .estimate)) +
+  geom_tile()
+```
+
