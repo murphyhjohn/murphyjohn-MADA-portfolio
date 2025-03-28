@@ -320,7 +320,7 @@ autoplot(lasso_tune_cv)
 
 ## rf cv tuning
 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 tune_rf_grid <- grid_regular(
   mtry(range = c(1, 7)),
   min_n(range = c(1, 21)),
@@ -351,7 +351,6 @@ autoplot(rf_tune_cv)
 
 # Results
 
-The RMSE of the lasso model increased slightly when we use cross validation. The RMSE of the random forest also increased, but in greater magnitude, when we use cross validation. The lasso model evaluated with cross validation has a smaller RMSE than the random forest whereas the opposite was previously true. The changes observed in the results is explained by overfitting, model complexity, and the effect of cross-validation on varying model bias and variance. 
+The RMSE of the lasso model increased slightly when we use cross validation. The RMSE of the random forest also increased, but in greater magnitude, when we use cross validation. The lasso model evaluated with cross validation has a smaller RMSE than the random forest whereas the opposite was previously true. The changes observed in the results is explained by overfitting, model complexity, and the effect of cross-validation on varying model bias and variance.
 
 The random forest model, being more flexible and complex, is prone to overfitting. It has low bias but high variance, meaning it fits training data well but struggles with generalization. When evaluated with cross-validation, its RMSE increases significantly because it does not generalize as well to new data. The lasso model, being a simpler and regularized linear model, has higher bias but lower variance so it is less prone to overfitting. Its RMSE increases only slightly with cross-validation.
-

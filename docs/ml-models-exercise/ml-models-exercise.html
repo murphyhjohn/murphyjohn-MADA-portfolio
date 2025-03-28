@@ -288,7 +288,7 @@ Attaching package: 'dplyr'</code></pre>
 ✖ dplyr::filter()  masks stats::filter()
 ✖ dplyr::lag()     masks stats::lag()
 ✖ recipes::step()  masks stats::step()
-• Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
+• Use tidymodels_prefer() to resolve common conflicts.</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -655,9 +655,8 @@ Attaching package: 'Matrix'</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>There were issues with some computations   A: x1
-There were issues with some computations   A: x3   B: x2
-There were issues with some computations   A: x5   B: x4
-There were issues with some computations   A: x7   B: x6
+There were issues with some computations   A: x2   B: x1
+There were issues with some computations   A: x6   B: x6
 There were issues with some computations   A: x7   B: x7</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>rf_tune_result_metrics <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(rf_tune_result<span class="sc">$</span>.metrics)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -716,29 +715,12 @@ There were issues with some computations   A: x7   B: x7</code></pre>
 <section id="rf-cv-tuning" class="level2">
 <h2 class="anchored" data-anchor-id="rf-cv-tuning">rf cv tuning</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>tune_rf_grid <span class="ot">&lt;-</span> <span class="fu">grid_regular</span>(</span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mtry</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">7</span>)),</span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">min_n</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">21</span>)),</span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="dv">7</span></span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>tune_rf_spec <span class="ot">&lt;-</span> <span class="fu">rand_forest</span>(</span>
-<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">mtry=</span><span class="fu">tune</span>(), </span>
-<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_n=</span><span class="fu">tune</span>(), </span>
-<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">trees=</span><span class="dv">300</span></span>
-<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"regression"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"ranger"</span>, <span class="at">seed=</span>rdmseed) </span>
-<span id="cb67-14"><a href="#cb67-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a>tune_rf_wf <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">%&gt;%</span> <span class="fu">add_model</span>(tune_rf_spec) <span class="sc">%&gt;%</span> <span class="fu">add_recipe</span>(tune_rec)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>rf_tune_cv <span class="ot">&lt;-</span> tune_rf_wf <span class="sc">%&gt;%</span> </span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(</span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">resamples=</span><span class="fu">vfold_cv</span>(dat, <span class="at">v=</span><span class="dv">5</span>, <span class="at">repeats=</span><span class="dv">5</span>), </span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">grid=</span>tune_rf_grid, </span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">metrics=</span><span class="fu">metric_set</span>(rmse)</span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>rf_tune_cv <span class="ot">&lt;-</span> tune_rf_wf <span class="sc">%&gt;%</span> </span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">resamples=</span><span class="fu">vfold_cv</span>(dat, <span class="at">v=</span><span class="dv">5</span>, <span class="at">repeats=</span><span class="dv">5</span>), </span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">grid=</span>tune_rf_grid, </span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">metrics=</span><span class="fu">metric_set</span>(rmse)</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>→ A | warning: 6 columns were requested but there were 5 predictors in the data. 5 will be used.</code></pre>
 </div>
@@ -750,74 +732,64 @@ There were issues with some computations   A: x7   B: x7</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>There were issues with some computations   A: x1
-There were issues with some computations   A: x3   B: x3
-There were issues with some computations   A: x6   B: x6
-There were issues with some computations   A: x9   B: x8
-There were issues with some computations   A: x12   B: x11
-There were issues with some computations   A: x15   B: x14
-There were issues with some computations   A: x17   B: x16
-There were issues with some computations   A: x20   B: x19
-There were issues with some computations   A: x23   B: x22
-There were issues with some computations   A: x25   B: x25
-There were issues with some computations   A: x29   B: x28
-There were issues with some computations   A: x31   B: x30
-There were issues with some computations   A: x34   B: x33
-There were issues with some computations   A: x37   B: x36
-There were issues with some computations   A: x39   B: x39
-There were issues with some computations   A: x42   B: x42
+There were issues with some computations   A: x2   B: x1
+There were issues with some computations   A: x8   B: x7
+There were issues with some computations   A: x14   B: x13
+There were issues with some computations   A: x18   B: x18
+There were issues with some computations   A: x24   B: x23
+There were issues with some computations   A: x30   B: x29
+There were issues with some computations   A: x36   B: x35
+There were issues with some computations   A: x40   B: x39
+There were issues with some computations   A: x43   B: x42
 There were issues with some computations   A: x45   B: x44
 There were issues with some computations   A: x48   B: x47
-There were issues with some computations   A: x50   B: x49
-There were issues with some computations   A: x53   B: x52
+There were issues with some computations   A: x51   B: x50
+There were issues with some computations   A: x53   B: x53
 There were issues with some computations   A: x56   B: x55
-There were issues with some computations   A: x58   B: x57
+There were issues with some computations   A: x58   B: x58
 There were issues with some computations   A: x61   B: x60
 There were issues with some computations   A: x64   B: x63
 There were issues with some computations   A: x66   B: x65
 There were issues with some computations   A: x69   B: x68
-There were issues with some computations   A: x71   B: x70
-There were issues with some computations   A: x73   B: x73
-There were issues with some computations   A: x76   B: x75
+There were issues with some computations   A: x71   B: x71
+There were issues with some computations   A: x74   B: x73
+There were issues with some computations   A: x77   B: x76
 There were issues with some computations   A: x79   B: x78
-There were issues with some computations   A: x81   B: x80
-There were issues with some computations   A: x84   B: x83
+There were issues with some computations   A: x82   B: x81
+There were issues with some computations   A: x85   B: x84
 There were issues with some computations   A: x87   B: x86
-There were issues with some computations   A: x89   B: x89
-There were issues with some computations   A: x92   B: x92
+There were issues with some computations   A: x90   B: x89
+There were issues with some computations   A: x93   B: x92
 There were issues with some computations   A: x95   B: x94
 There were issues with some computations   A: x98   B: x97
-There were issues with some computations   A: x101   B: x100
-There were issues with some computations   A: x103   B: x103
+There were issues with some computations   A: x100   B: x100
+There were issues with some computations   A: x103   B: x102
 There were issues with some computations   A: x106   B: x105
-There were issues with some computations   A: x109   B: x108
-There were issues with some computations   A: x111   B: x111
+There were issues with some computations   A: x108   B: x107
+There were issues with some computations   A: x111   B: x110
 There were issues with some computations   A: x114   B: x113
-There were issues with some computations   A: x117   B: x116
-There were issues with some computations   A: x119   B: x119
+There were issues with some computations   A: x116   B: x115
+There were issues with some computations   A: x119   B: x118
 There were issues with some computations   A: x122   B: x121
-There were issues with some computations   A: x124   B: x124
+There were issues with some computations   A: x124   B: x123
 There were issues with some computations   A: x127   B: x126
-There were issues with some computations   A: x129   B: x129
-There were issues with some computations   A: x133   B: x132
+There were issues with some computations   A: x130   B: x129
+There were issues with some computations   A: x132   B: x131
 There were issues with some computations   A: x135   B: x134
 There were issues with some computations   A: x138   B: x137
 There were issues with some computations   A: x141   B: x140
 There were issues with some computations   A: x143   B: x142
-There were issues with some computations   A: x145   B: x144
+There were issues with some computations   A: x145   B: x145
 There were issues with some computations   A: x148   B: x147
-There were issues with some computations   A: x150   B: x150
-There were issues with some computations   A: x153   B: x152
-There were issues with some computations   A: x156   B: x155
-There were issues with some computations   A: x159   B: x158
+There were issues with some computations   A: x151   B: x150
+There were issues with some computations   A: x154   B: x153
+There were issues with some computations   A: x156   B: x156
 There were issues with some computations   A: x162   B: x161
-There were issues with some computations   A: x164   B: x163
-There were issues with some computations   A: x167   B: x166
-There were issues with some computations   A: x169   B: x168
-There were issues with some computations   A: x172   B: x171
-There were issues with some computations   A: x175   B: x174
+There were issues with some computations   A: x166   B: x166
+There were issues with some computations   A: x170   B: x170
 There were issues with some computations   A: x175   B: x175</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(rf_tune_cv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(rf_tune_cv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
