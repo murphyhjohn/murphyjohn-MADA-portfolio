@@ -1,5 +1,36 @@
 ---
 title: "Tidy Tuesday Exercise"
+author: "Murphy John"
+format: 
+  html:
+      toc: true
+editor: visual
 ---
 
-Placeholder file for the future Tidy Tuesday exercise.
+# Setup
+
+```{r}
+# load data
+tuesdata <- tidytuesdayR::tt_load('2025-04-08')
+care_state <- tuesdata$care_state
+```
+Emergency room wait times vary significantly across the United States depending on factors such as hospital resources, patient volume, and staffing levels, with some states facing delays that can stretch for more than three hours.
+
+Is there a connection between state populations and wait times?
+Which conditions have the longest wait times? The shortest?
+
+# Initial EDA
+```{r}
+summary(care_state)
+str(care_state)
+unique(care_state$condition)
+unique(care_state$measure_id)
+unique(care_state$measure_name)
+```
+
+# Data processing
+```{r}
+
+```
+
+
