@@ -10,6 +10,14 @@ editor: visual
 # Setup
 
 ```{r}
+# load packages
+library(dplyr)
+library(ggplot2)
+library(tidymodels)
+library(MASS)
+```
+
+```{r}
 # load data
 tuesdata <- tidytuesdayR::tt_load('2025-04-08')
 care_state <- tuesdata$care_state
@@ -28,9 +36,300 @@ unique(care_state$measure_id)
 unique(care_state$measure_name)
 ```
 
+# Research Question
+What hospital resources and characteristics are associated with emergency department wait times?
+
 # Data processing
 ```{r}
+# consider only OP_18b as the outcome "Average (median) time patients spent in 
+# the emergency department before leaving from the visit A lower number of 
+# minutes is better"
 
+dat_outcome <- care_state %>%
+  filter(measure_id == "OP_18b") %>%
+  dplyr::select(state, measure_id, score) %>%
+  tidyr::pivot_wider(names_from = measure_id, values_from = score) %>%
+  na.omit()
+```
+
+```{r}
+# as predictors, consider HCP_COVID_19, IMM_3, OP_22, OP_23, OP_29, 
+# SAFE_USE_OF_OPIOIDS, and SEP_1
+dat_pred <- care_state %>%
+  filter(measure_id %in% c("HCP_COVID_19", "IMM_3", "OP_22", "OP_23", "OP_29", 
+                           "SAFE_USE_OF_OPIOIDS", "SEP_1")) %>%
+  dplyr::select(state, measure_id, score) %>%
+  tidyr::pivot_wider(names_from = measure_id, values_from = score)
+```
+
+```{r}
+# merge outcome with predictors
+dat_all <- dat_pred %>%
+  right_join(dat_outcome, by="state")
+```
+
+# EDA
+```{r, fig.height=5, fig.width=5}
+# get the distribution of each variable
+ggplot(dat_all, aes(x = OP_18b)) + 
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "white") +
+  labs(title = "OP_18b score") +
+  theme_minimal()
+
+# get mean and variance of outcome
+mean(dat_all$OP_18b)
+var(dat_all$OP_18b)
+
+ggplot(dat_all, aes(x = HCP_COVID_19)) + 
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  labs(title = "HCP_COVID_19 score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = IMM_3)) + 
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  labs(title = "IMM_3 score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = OP_22)) + 
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "OP_22 score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = OP_23)) + 
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "white") +
+  labs(title = "OP_23 score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = OP_29)) + 
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "OP_29 score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = SAFE_USE_OF_OPIOIDS)) + 
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "SAFE_USE_OF_OPIOIDS score") +
+  theme_minimal()
+
+ggplot(dat_all, aes(x = SEP_1)) + 
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "SEP_1 score") +
+  theme_minimal()
+```
+
+OP_18b is right-skewed, HCP_COVID_19 is right-skewed due to a few outliers, 
+IMM_3 appears pretty normal aside from 3 outliers, OP_22 is right-skewed,
+OP_23 is left-skewed and has a few outliers, OP_29 is normal with one outier,
+SAFE_USE_OF_OPIOIDS is normal with one outlier, SEP_1 is pretty normal.
+
+```{r}
+# correlations
+cor(dat_all[sapply(dat_all, is.numeric)])
 ```
 
 
+# Model fits
+
+```{r}
+# split data into test and train
+set.seed(333)
+train_scheme <- sample(nrow(dat_all), 42)
+dat_train <- dat_all[train_scheme, ]
+dat_test <- dat_all[-train_scheme, ]
+```
+
+## Negative binomial regression
+```{r}
+# since we are dealing with count data that is over-dispersed, use negative 
+# binomial regression
+
+# set rec
+nb1_recipe <- OP_18b ~ HCP_COVID_19 + IMM_3 + OP_22 + OP_23 + OP_29 + 
+                    SAFE_USE_OF_OPIOIDS + SEP_1
+# fit model
+fit_nb1 <- MASS::glm.nb(nb1_recipe,
+                        data = dat_train)
+
+# summary
+summary(fit_nb1)
+
+# CIs
+confint(fit_nb1)
+
+## reduce the model to HCP_COVID_19, OP_22, and SEP_1
+# set rec
+nb2_recipe <- OP_18b ~ HCP_COVID_19 + OP_22
+
+# fit model
+fit_nb2 <- MASS::glm.nb(nb2_recipe,
+                        data = dat_train)
+
+# summary
+summary(fit_nb2)
+
+# CIs
+confint(fit_nb2)
+
+# get preds
+preds_nb2 <- predict(fit_nb2, newdata = dat_train, type = "response")
+
+# rmse
+sqrt(mean((dat_train$OP_18b - preds_nb2)^2, na.rm = TRUE))
+```
+
+```{r}
+# run nb model with cv- tidymodels doesnt support MASS objects so I'm improvising
+set.seed(333)
+nb_folds <- vfold_cv(dat_train, v = 5)
+
+# function to train & evaluate nb model on each split
+nb_cv_metrics <- function(split) {
+  train_data <- analysis(split)
+  test_data  <- assessment(split)
+  
+  # fit model
+  model <- glm.nb(nb2_recipe, data = train_data)
+  
+  # get preds
+  preds <- predict(model, newdata = test_data, type = "response")
+  
+  # get rmse
+  rmse <- sqrt(mean((test_data$OP_18b - preds)^2, na.rm = TRUE))
+  
+  # get rsq
+  log_likelihood_model <- logLik(model)
+  log_likelihood_null <- logLik(glm.nb(OP_18b ~ 1, data = train_data))  # Null model (intercept only)
+  r_squared <- 1 - (log_likelihood_model / log_likelihood_null)
+  
+  tibble(rmse = as.numeric(rmse), r_squared = as.numeric(r_squared))
+}
+
+# run
+nb_metrics <- purrr::map_dfr(nb_folds$splits, nb_cv_metrics)
+
+# results
+mean(nb_metrics$rmse, na.rm = TRUE)
+mean(nb_metrics$r_squared, na.rm = TRUE)
+```
+
+## Random forest
+```{r}
+set.seed(333)
+
+# create folds
+folds <- rsample::vfold_cv(dat_train, v = 5)
+
+# specify and fit models
+rf_spec <- 
+  rand_forest() %>% 
+  set_mode("regression") %>% 
+  set_engine("ranger", seed = 333)
+
+# wf
+rf_wf <- workflows::workflow() %>%
+  workflows::add_model(rf_spec) %>%
+  workflows::add_formula(OP_18b ~ HCP_COVID_19 + OP_22)
+
+fit_rf <- rf_wf %>%
+  tune::fit_resamples(folds)
+
+tune::collect_metrics(fit_rf)
+```
+
+## Natural Spline
+
+```{r}
+set.seed(333)
+
+# spline spec
+spline_spec <- 
+  linear_reg() %>%
+  set_engine(engine = 'lm') %>%
+  set_mode('regression')
+
+# natural spline recipe
+spline_rec <- recipe(
+  OP_18b ~ HCP_COVID_19 + OP_22,
+  data=dat_train) %>%
+  step_ns(HCP_COVID_19, deg_free = 3)
+
+# workflow
+spline_wf <- workflow() %>%
+  add_recipe(spline_rec)
+
+spline_fit <- spline_wf %>%
+  add_model(spline_spec) %>%
+  fit(data=dat_train)
+
+# check variable selection
+spline_fit %>% extract_fit_parsnip() %>% tidy()
+
+# get pred
+dat_train$pred_spline <- augment(spline_fit, new_data = dat_train)$.pred
+
+# metrics
+rmse(dat_train, truth=OP_18b, estimate = pred_spline)
+rsq(dat_train, truth=OP_18b, estimate = pred_spline)
+```
+
+# Results
+
+For each model, the following metrics are reported:
+
+- Negative Binomial: RMSE = 33.02, R-Squared = 0.0506
+- Random Forest: RMSE = 31.5, R-Squared = 0.257
+- Natural Spline: RMSE = 24.8, R-Squared = 0.584
+
+This suggests that the Natural spline model is performing the best. We will choose to further evaluate that model.
+
+# Final model evaluation
+
+```{r}
+# get preds on test data
+spline_preds <- augment(spline_fit, new_data = dat_test)
+
+# residuals
+spline_preds <- spline_preds %>%
+  mutate(residual = OP_18b - .pred)
+
+# RMSE
+rmse(spline_preds, truth = OP_18b, estimate = .pred)
+
+# R-squared
+rsq(spline_preds, truth = OP_18b, estimate = .pred)
+```
+
+```{r}
+# Residual plot
+ggplot(spline_preds, aes(x = .pred, y = residual)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Residuals vs. Predicted",
+    x = "Predicted Values",
+    y = "Residuals"
+  ) + 
+  scale_y_continuous(limits=c(-130, 130))
+```
+
+The natural spline model performs well on the test data with an RMSE = 44.7 and 
+R-Squared = 0.715. The Residual vs Fitted plot shows in general a random pattern
+with one outlying observation.
+
+# Summary
+The final model selected was a natural spline model considering "Percentage of 
+healthcare personnel who are up to date with COVID-19 vaccinations" (HCP_COVID_19),
+"Percentage of patients who left the emergency department before being seen 
+Lower percentages are better" (OP_22) and "Percentage of patients who received 
+appropriate care for severe sepsis and septic shock. Higher percentages are better"
+(SEP_1) as predictors of "Average (median) time patients spent in the emergency 
+department before leaving from the visit A lower number of minutes is better" 
+(OP_18b). 
+
+The model suggests that OP_22 is positively associated with wait times. For each 
+unit increase in OP_22, the expected wait time increases by about 10.8 minutes.
+The natural spline model revealed a nonlinear relationship between HCP_COVID_19 
+and emergency department wait times. The three spline terms for HCP_COVID_19 
+were all substantial in magnitude, with estimates of −39.3, 121.0, and 168.0 for 
+the first, second, and third components respectively. These results suggest a 
+non-monotonic association, where the effect of HCP_COVID_19 on wait times 
+changes direction and intensity across its range. 
